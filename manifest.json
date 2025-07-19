@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "TabTalk",
+  "version": "1.0",
+  "description": "Mention any browser tab in your AI chat. Instantly share page content as context, so your AI assistant can understand exactly what you’re seeing—making responses smarter and more relevant.",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_icon": "icons/icon-48.png",
+    "default_title": "TabTalk",
+    "default_popup": "components/popup.html"
+  },
+  "background": {
+    "service_worker": "components/background.js",
+    "type": "module"
+  },
+  "options_page": "components/options.html",
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "libs/turndown.7.2.0.js",
+        "libs/turndown-plugin-gfm.1.0.2.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}
