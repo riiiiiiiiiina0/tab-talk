@@ -93,7 +93,7 @@ export function injectScriptToPasteFilesAsAttachments(tabId) {
  * @param {number} [timeout=5000]
  * @returns {Promise<CollectedTabInfo|null>}
  */
-export async function collectPageContent(tabId, timeout = 5000) {
+export async function collectPageContent(tabId, timeout = 10_000) {
   return new Promise((resolve) => {
     if (typeof tabId !== 'number') {
       resolve(null);

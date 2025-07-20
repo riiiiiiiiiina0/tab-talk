@@ -40,69 +40,103 @@
   }
 
   async function getYouTubeContent() {
-    // 1️⃣ Expand the video description (makes the transcript button visible)
-    try {
-      const description = await waitForElement(
-        'ytd-watch-metadata #description',
-        5_000,
+    const clickDescription = async () => {
+      // 1️⃣ Expand the video description (makes the transcript button visible)
+      try {
+        const description = await waitForElement(
+          'ytd-watch-metadata #description',
+          3_000,
+        );
+        /** @type {HTMLElement} */ (description).click();
+      } catch (_) {
+        /* description section not critical */
+      }
+    };
+
+    const clickShowTranscriptButton = async () => {
+      // 2️⃣ Click the "Show transcript" button (if available)
+      try {
+        const transcriptBtn = await waitForElement(
+          'ytd-video-description-transcript-section-renderer #primary-button button',
+          2_000,
+        );
+        /** @type {HTMLElement} */ (transcriptBtn).click();
+      } catch (_) {
+        /* transcript might be disabled */
+      }
+    };
+
+    const waitForTranscriptList = async () => {
+      try {
+        // 3️⃣ Wait for the transcript list to load
+        const list = await waitForElement(
+          '.ytd-transcript-segment-list-renderer',
+          3_000,
+        );
+
+        // Force-load lazy segments by scrolling once to the bottom
+        list.scrollTop = list.scrollHeight;
+        await sleep(300);
+      } catch (_) {
+        /* ignore */
+      }
+    };
+
+    const getTitle = async () => {
+      return (
+        document
+          .querySelector('ytd-watch-metadata #title')
+          ?.textContent?.trim() ||
+        document.title ||
+        'no title'
       );
-      /** @type {HTMLElement} */ (description).click();
-    } catch (_) {
-      /* description section not critical */
-    }
+    };
 
-    // 2️⃣ Click the "Show transcript" button (if available)
-    try {
-      const transcriptBtn = await waitForElement(
-        'ytd-video-description-transcript-section-renderer #primary-button button',
-        3_000,
+    const getDescription = async () => {
+      const desc =
+        document.querySelector('ytd-watch-metadata #description')
+          ?.textContent || 'no description';
+      return desc
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .join('\n');
+    };
+
+    const getChannel = async () => {
+      return (
+        document
+          .querySelector('ytd-channel-name yt-formatted-string')
+          ?.textContent?.trim() || 'unknown channel'
       );
-      /** @type {HTMLElement} */ (transcriptBtn).click();
-    } catch (_) {
-      /* transcript might be disabled */
-    }
+    };
 
-    // 3️⃣ Wait for the transcript list to load
-    const list = await waitForElement(
-      '.ytd-transcript-segment-list-renderer',
-      5_000,
-    );
+    const getCaptions = async () => {
+      const list = document.querySelector(
+        '.ytd-transcript-segment-list-renderer',
+      );
+      if (!list || !list.children) return 'no captions';
 
-    // Force-load lazy segments by scrolling once to the bottom
-    try {
-      list.scrollTop = list.scrollHeight;
-      await sleep(300);
-    } catch (_) {
-      /* ignore */
-    }
+      const captions = Array.from(list.children)
+        .map((child) => {
+          const ts = child
+            .querySelector('.segment-timestamp')
+            ?.textContent?.trim();
+          const txt = child.querySelector('.segment-text')?.textContent?.trim();
+          return ts && txt ? `${ts}: ${txt}` : null;
+        })
+        .filter(Boolean)
+        .join('\n');
+      return captions;
+    };
 
-    // 4️⃣ Gather all segments (timestamp + text)
-    const captions = Array.from(list.children)
-      .map((child) => {
-        const ts = child
-          .querySelector('.segment-timestamp')
-          ?.textContent?.trim();
-        const txt = child.querySelector('.segment-text')?.textContent?.trim();
-        return ts && txt ? `${ts}: ${txt}` : null;
-      })
-      .filter(Boolean)
-      .join('\n');
-
-    // Collect title, description, etc.
-    const title = document
-      .querySelector('ytd-watch-metadata #title')
-      ?.textContent?.trim();
-    const description = (
-      document.querySelector('ytd-watch-metadata #description')?.textContent ||
-      ''
-    )
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .join('\n');
-    const channel = document
-      .querySelector('ytd-channel-name yt-formatted-string')
-      ?.textContent?.trim();
+    await clickDescription();
+    await clickShowTranscriptButton();
+    await waitForTranscriptList();
+    const title = await getTitle();
+    const description = await getDescription();
+    const channel = await getChannel();
+    const captions = await getCaptions();
 
     // Return newline-separated Markdown string
     return [
