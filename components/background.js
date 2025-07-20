@@ -11,12 +11,25 @@ initActionButtonBehavior();
 let collectedContents = [];
 
 async function collectPageContentOneByOne(tabsToProcess) {
-  const results = [];
-  for (const tab of tabsToProcess) {
-    const content = await collectPageContent(tab);
-    results.push(content);
+  // Show a loading badge while we process the tabs
+  try {
+    // Display an hourglass emoji as badge text
+    await chrome.action.setBadgeText({ text: '⏳' }).catch(() => {});
+    // Optional: darker background so the white emoji stands out
+    await chrome.action
+      .setBadgeBackgroundColor({ color: '#4b5563' })
+      .catch(() => {});
+
+    const results = [];
+    for (const tab of tabsToProcess) {
+      const content = await collectPageContent(tab);
+      results.push(content);
+    }
+    return results;
+  } finally {
+    // Clear the badge once we're finished (or if an error occurs)
+    await chrome.action.setBadgeText({ text: '' }).catch(() => {});
   }
-  return results;
 }
 
 /**
