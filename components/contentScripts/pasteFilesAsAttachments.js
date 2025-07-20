@@ -62,7 +62,7 @@
         }
 
         const fileContent = [
-          `Please treat this as the content of page titled "${
+          `Please treat this as the content of a web page titled "${
             title || `Tab ${idx + 1}`
           }" (URL: ${url})`,
           `---`,
