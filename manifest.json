@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TabTalk",
   "version": "1.3",
-  "description": "Mention any browser tab in your AI chat. Instantly share page content as context, so your AI assistant can understand exactly what you’re seeing—making responses smarter and more relevant.",
+  "description": "Share any tab’s content in AI chat for smarter, more relevant responses.",
   "permissions": [
     "tabs",
     "activeTab",
