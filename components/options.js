@@ -79,10 +79,8 @@ function showStatus(text) {
 }
 
 async function init() {
-  console.log('llmOptions', llmOptions);
   // Create the LLM options
   if (llmOptions) {
-    console.log('supported llm providers', SUPPORTED_LLM_PROVIDERS);
     SUPPORTED_LLM_PROVIDERS.forEach((llmProvider) => {
       const label = createLLMOption(llmProvider);
       llmOptions.appendChild(label);
@@ -91,7 +89,6 @@ async function init() {
 
   // Set the default LLM provider
   const llmProvider = await getLLMProvider();
-  console.log('llmProvider', llmProvider);
   updateLLMOptionValue(llmProvider, true);
 
   // Save on button click

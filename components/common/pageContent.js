@@ -37,11 +37,42 @@ export function injectContentScripts(tabId, files) {
  * @returns {Promise<void>}
  */
 export function injectScriptToGetPageContent(tabId) {
-  return injectContentScripts(tabId, [
-    'libs/turndown.7.2.0.js',
-    'libs/turndown-plugin-gfm.1.0.2.js',
-    'components/contentScripts/getPageContentAsMarkdown.js',
-  ]);
+  /*
+   * For YouTube video pages, some DOM features (e.g., transcript loading) only
+   * initialize when the tab is active/visible. Activate the tab first, then
+   * proceed with the normal injection chain.
+   */
+  return new Promise((resolve) => {
+    chrome.tabs.get(tabId, (tab) => {
+      if (chrome.runtime.lastError || !tab) {
+        // Fallback – just inject the scripts
+        injectContentScripts(tabId, [
+          'libs/turndown.7.2.0.js',
+          'libs/turndown-plugin-gfm.1.0.2.js',
+          'components/contentScripts/getPageContentAsMarkdown.js',
+        ]).then(resolve);
+        return;
+      }
+
+      const isYouTubeWatch = /^https?:\/\/(?:www\.)?youtube\.com\/watch/.test(
+        tab.url || '',
+      );
+
+      const doInject = () =>
+        injectContentScripts(tabId, [
+          'libs/turndown.7.2.0.js',
+          'libs/turndown-plugin-gfm.1.0.2.js',
+          'components/contentScripts/getPageContentAsMarkdown.js',
+        ]).then(resolve);
+
+      if (isYouTubeWatch) {
+        // Activate the tab first, then inject after it becomes ready.
+        chrome.tabs.update(tabId, { active: true }, () => doInject());
+      } else {
+        doInject();
+      }
+    });
+  });
 }
 
 /**
@@ -87,8 +118,6 @@ export async function collectPageContent(tabId, timeout = 5000) {
         url: message.url || '',
         markdown: message.markdown,
       };
-
-      console.log('result', result);
 
       resolve(result);
     };

@@ -10,6 +10,15 @@ initActionButtonBehavior();
 
 let collectedContents = [];
 
+async function collectPageContentOneByOne(tabsToProcess) {
+  const results = [];
+  for (const tab of tabsToProcess) {
+    const content = await collectPageContent(tab);
+    results.push(content);
+  }
+  return results;
+}
+
 /**
  * Handle the action button click.
  * This will be called when user click the action button when NOT in LLM provider page.
@@ -26,17 +35,15 @@ chrome.action.onClicked.addListener(async (activeTab) => {
     tabsToProcess = tabsToProcess.filter((tab) =>
       (tab.url || '').startsWith('http'),
     );
-    console.log('tabsToProcess', tabsToProcess);
 
     if (tabsToProcess.length === 0) {
       console.log('[background] no tabs to process');
       return;
     }
 
-    collectedContents = await Promise.all(
-      tabsToProcess.map((tab) => collectPageContent(tab.id)),
-    );
-    console.log('collectedContents', collectedContents);
+    const tabIds = tabsToProcess.map((tab) => tab.id);
+
+    collectedContents = await collectPageContentOneByOne(tabIds);
 
     // open llm page & paste in page content
     const llmProvider = await getLLMProvider();
@@ -46,7 +53,7 @@ chrome.action.onClicked.addListener(async (activeTab) => {
       return;
     }
     const url = meta.url;
-    const tab = await chrome.tabs.create({ url });
+    const tab = await chrome.tabs.create({ url, active: true });
     if (tab.id) {
       injectScriptToPasteFilesAsAttachments(tab.id);
     }
@@ -65,29 +72,26 @@ chrome.action.onClicked.addListener(async (activeTab) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) return;
 
-  if (
-    message.type === 'collect-page-content' &&
-    Array.isArray(message.tabIds)
-  ) {
-    console.log('collect-page-content', message);
-    Promise.all(message.tabIds.map((tabId) => collectPageContent(tabId))).then(
-      (contents) => {
-        collectedContents = contents;
-        console.log('collectedContents', collectedContents);
+  // keep the current tab id first, we might need to jump back to it
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length === 0) return;
+    const tabId = tabs[0].id;
+    if (!tabId) return;
 
-        // get current tab id, it should be the llm provider page
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs.length === 0) return;
-          const activeTab = tabs[0];
-          if (activeTab.id) {
-            injectScriptToPasteFilesAsAttachments(activeTab.id);
-          }
+    if (
+      message.type === 'collect-page-content' &&
+      Array.isArray(message.tabIds)
+    ) {
+      collectPageContentOneByOne(message.tabIds).then((contents) => {
+        collectedContents = contents;
+        chrome.tabs.update(tabId, { active: true }, () => {
+          injectScriptToPasteFilesAsAttachments(tabId);
         });
-      },
-    );
-    return true;
-  } else if (message.type === 'get-selected-tabs-data') {
-    sendResponse({ tabs: collectedContents });
-    return;
-  }
+      });
+    } else if (message.type === 'get-selected-tabs-data') {
+      sendResponse({ tabs: collectedContents });
+    }
+  });
+
+  return true;
 });
