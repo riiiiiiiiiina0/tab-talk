@@ -169,7 +169,7 @@
       `Video title: ${title}`,
       `Description: ${description}`,
       `Channel: ${channel}`,
-      `Captions: ${captions}`,
+      `Captions:\n${captions}`,
     ].join('\n\n');
   }
 

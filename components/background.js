@@ -5,8 +5,34 @@ import {
   collectPageContent,
   injectScriptToPasteFilesAsAttachments,
 } from './common/pageContent.js';
+import { getIconStyle } from './common/iconStyle.js';
 
 let collectedContents = [];
+let lastIsDark = false;
+
+/**
+ * Update the extension action icon based on theme and selected icon style.
+ * @param {boolean} isDark Whether the OS theme is dark.
+ */
+async function updateActionIcon(isDark) {
+  const style = await getIconStyle();
+  const baseName = style === 'simple' ? 'simple' : 'rainbow';
+  const iconName = isDark ? `${baseName}-dark` : baseName;
+  const iconDict = {
+    16: `/icons/${iconName}/icon-16x16.png`,
+    32: `/icons/${iconName}/icon-32x32.png`,
+    48: `/icons/${iconName}/icon-48x48.png`,
+    128: `/icons/${iconName}/icon-128x128.png`,
+  };
+
+  chrome.action.setIcon({ path: iconDict });
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    if (tab && tab.id !== undefined) {
+      chrome.action.setIcon({ path: iconDict, tabId: tab.id });
+    }
+  });
+}
 
 /**
  * Show a loading badge on the action button.
@@ -97,6 +123,21 @@ chrome.action.onClicked.addListener(async (activeTab) => {
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) return;
+
+  // Handle OS theme changes (sent from detectThemeChange.js)
+  if (
+    message.type === 'os-theme-changed' &&
+    typeof message.dark === 'boolean'
+  ) {
+    lastIsDark = !!message.dark;
+    updateActionIcon(lastIsDark);
+    return;
+  }
+
+  if (message.type === 'icon-style-changed') {
+    updateActionIcon(lastIsDark);
+    return;
+  }
 
   // keep the current tab id first, we might need to jump back to it
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {

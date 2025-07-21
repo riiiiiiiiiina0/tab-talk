@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TabTalk",
   "version": "1.6",
-  "description": "Share any tab’s content in AI chat for smarter, more relevant responses.",
+  "description": "Share any tab's content in AI chat for smarter, more relevant responses.",
   "permissions": [
     "tabs",
     "activeTab",
@@ -14,12 +14,13 @@
     "<all_urls>"
   ],
   "icons": {
-    "16": "icons/icon-16.png",
-    "48": "icons/icon-48.png",
-    "128": "icons/icon-128.png"
+    "16": "icons/rainbow/icon-16x16.png",
+    "32": "icons/rainbow/icon-32x32.png",
+    "48": "icons/rainbow/icon-48x48.png",
+    "128": "icons/rainbow/icon-128x128.png"
   },
   "action": {
-    "default_icon": "icons/icon-48.png",
+    "default_icon": "icons/rainbow/icon-48x48.png",
     "default_title": "TabTalk",
     "default_popup": "components/popup.html"
   },
@@ -37,6 +38,17 @@
       "matches": [
         "<all_urls>"
       ]
+    },
+    {
+      "resources": [
+        "icons/rainbow/*.png",
+        "icons/rainbow-dark/*.png",
+        "icons/simple/*.png",
+        "icons/simple-dark/*.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "content_scripts": [
@@ -48,6 +60,15 @@
         "components/contentScripts/interceptYoutubeSubtitles.js"
       ],
       "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "components/contentScripts/detectThemeChange.js"
+      ],
+      "run_at": "document_start"
     }
   ]
 }

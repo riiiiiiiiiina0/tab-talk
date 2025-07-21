@@ -25,7 +25,8 @@
 
     <!-- Header -->
     <div class="flex flex-col items-center space-y-2">
-      <img src="../icons/icon-128.png" alt="TabTalk Icon"
+      <img src="../icons/rainbow/icon-128x128.png" data-light-src="../icons/rainbow/icon-128x128.png"
+        data-dark-src="../icons/rainbow-dark/icon-128x128.png" alt="TabTalk Icon" id="theme-icon"
         class="w-32 h-32 p-2 rounded-full bg-base-300 dark:bg-gray-700">
       <h1 class="text-3xl mt-4 font-bold text-gray-800 dark:text-white">TabTalk – Options</h1>
     </div>
@@ -40,6 +41,14 @@
         </label>
 
         <!-- LLM Options created dynamically -->
+      </div>
+
+      <!-- Icon Style Selection Group -->
+      <div class="form-control space-y-3" id="icon-style-options">
+        <label class="label">
+          <span class="label-text text-base font-semibold text-gray-700 dark:text-gray-200">Action Icon Style</span>
+        </label>
+        <!-- Icon Style Options created dynamically -->
       </div>
 
       <!-- Action Button -->
