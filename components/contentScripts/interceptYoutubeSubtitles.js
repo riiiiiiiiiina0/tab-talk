@@ -50,9 +50,14 @@
     try {
       console.log('[interceptYoutubeSubtitles] waiting for subtitles button');
       const btn = /** @type {HTMLElement} */ (
-        await waitForElement('.ytp-subtitles-button', 15000)
+        await waitForElement('.ytp-subtitles-button', 5_000)
       );
       console.log('[interceptYoutubeSubtitles] subtitles button found', btn);
+
+      if (btn.title.includes('unavailable')) {
+        console.log('[interceptYoutubeSubtitles] subtitles unavailable');
+        return;
+      }
 
       // Wait a bit to ensure controls are ready
       await sleep(300);

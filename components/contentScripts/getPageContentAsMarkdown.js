@@ -40,6 +40,13 @@
   }
 
   async function getYouTubeContent() {
+    const checkIsSubtitlesAvailable = async () => {
+      const btn = /** @type {HTMLElement} */ (
+        await waitForElement('.ytp-subtitles-button', 5_000)
+      );
+      return btn && !btn.title.includes('unavailable');
+    };
+
     const clickDescription = async () => {
       // 1️⃣ Expand the video description (makes the transcript button visible)
       try {
@@ -149,15 +156,20 @@
       return captions;
     };
 
-    // Try to fetch cached captions from the background service worker first
-    let captions = await getCaptionsFromBackgroundScript();
+    const available = await checkIsSubtitlesAvailable();
+    let captions = 'no captions';
 
-    // If no cached captions, try to extract them from the DOM
-    if (!captions) {
-      await clickDescription();
-      await clickShowTranscriptButton();
-      await waitForTranscriptList();
-      captions = await getCaptions();
+    if (available) {
+      // Try to fetch cached captions from the background service worker first
+      captions = await getCaptionsFromBackgroundScript();
+
+      // If no cached captions, try to extract them from the DOM
+      if (!captions) {
+        await clickDescription();
+        await clickShowTranscriptButton();
+        await waitForTranscriptList();
+        captions = await getCaptions();
+      }
     }
 
     const title = await getTitle();
