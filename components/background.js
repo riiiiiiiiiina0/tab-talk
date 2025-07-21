@@ -62,12 +62,14 @@ async function collectPageContentOneByOne(tabsToProcess) {
   try {
     for (const tab of tabsToProcess) {
       const content = await collectPageContent(tab);
-      if (content === null) {
-        // In case of fail to collect content from page or timeout, make sure the badge is cleared.
-        await chrome.action.setBadgeText({ text: '' }).catch(() => {});
-      }
       results.push(content);
     }
+
+    // In case of fail to collect content from page or timeout, make sure the badge is cleared.
+    if (results.some((r) => r === null || r.markdown === '')) {
+      await chrome.action.setBadgeText({ text: '' }).catch(() => {});
+    }
+
     return results;
   } catch (err) {
     // Clear the badge if something goes wrong so we don't leave it stuck.
