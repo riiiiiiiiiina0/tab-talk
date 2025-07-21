@@ -18,7 +18,7 @@ function getMatchingLLMProvider(url) {
 /**
  * Initialise the action button behavior.
  */
-export function initActionButtonBehavior() {
+function initActionButtonBehavior() {
   // === Per-tab popup handling ===
   /**
    * Sets the extension action popup depending on whether the given tab is a supported app.
@@ -30,7 +30,6 @@ export function initActionButtonBehavior() {
     if (!tab || typeof tab.id !== 'number' || !tab.url) return;
     let popup = '';
     try {
-      const host = new URL(tab.url).host;
       const provider = getMatchingLLMProvider(tab.url);
       if (provider) popup = 'components/popup.html';
     } catch {
@@ -64,3 +63,5 @@ export function initActionButtonBehavior() {
 
   console.log('action button behavior initialized');
 }
+
+initActionButtonBehavior();

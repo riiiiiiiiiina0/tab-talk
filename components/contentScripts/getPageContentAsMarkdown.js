@@ -111,6 +111,25 @@
       );
     };
 
+    const getCaptionsFromBackgroundScript = async () => {
+      // Try to fetch cached captions from the background service worker
+      try {
+        const videoId = new URLSearchParams(location.search).get('v');
+        if (videoId) {
+          const res = await chrome.runtime.sendMessage({
+            type: 'get-youtube-caption',
+            videoId,
+          });
+          if (res && typeof res.caption === 'string' && res.caption.length) {
+            return res.caption;
+          }
+        }
+      } catch (err) {
+        /* ignore and fallback to DOM extraction */
+        return null;
+      }
+    };
+
     const getCaptions = async () => {
       const list = document.querySelector(
         '.ytd-transcript-segment-list-renderer',
@@ -130,13 +149,20 @@
       return captions;
     };
 
-    await clickDescription();
-    await clickShowTranscriptButton();
-    await waitForTranscriptList();
+    // Try to fetch cached captions from the background service worker first
+    let captions = await getCaptionsFromBackgroundScript();
+
+    // If no cached captions, try to extract them from the DOM
+    if (!captions) {
+      await clickDescription();
+      await clickShowTranscriptButton();
+      await waitForTranscriptList();
+      captions = await getCaptions();
+    }
+
     const title = await getTitle();
     const description = await getDescription();
     const channel = await getChannel();
-    const captions = await getCaptions();
 
     // Return newline-separated Markdown string
     return [

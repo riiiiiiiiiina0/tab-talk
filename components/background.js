@@ -1,12 +1,10 @@
-import { initActionButtonBehavior } from './common/actionButtonBehavior.js';
+import './common/actionButtonBehavior.js';
+import './common/ytSubtitleIntercept.js';
 import { LLM_PROVIDER_META, getLLMProvider } from './common/llmProviders.js';
 import {
   collectPageContent,
-  injectContentScripts,
   injectScriptToPasteFilesAsAttachments,
 } from './common/pageContent.js';
-
-initActionButtonBehavior();
 
 let collectedContents = [];
 
