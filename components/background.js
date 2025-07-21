@@ -8,25 +8,40 @@ import {
 
 let collectedContents = [];
 
-async function collectPageContentOneByOne(tabsToProcess) {
-  // Show a loading badge while we process the tabs
-  try {
-    // Display an hourglass emoji as badge text
-    await chrome.action.setBadgeText({ text: '⏳' }).catch(() => {});
-    // Optional: darker background so the white emoji stands out
+/**
+ * Show a loading badge on the action button.
+ * @param {number} [tabId] - The tab ID to show the badge on.
+ */
+async function showLoadingBadge(tabId) {
+  // On Vivaldi, the badge is not updated on current tab on the action button, unless we set it on the current tab.
+  if (tabId) {
+    await chrome.action.setBadgeText({ text: '⏳', tabId }).catch(() => {});
     await chrome.action
-      .setBadgeBackgroundColor({ color: '#4b5563' })
+      .setBadgeBackgroundColor({ color: '#4CAF50', tabId })
       .catch(() => {});
+  }
 
-    const results = [];
+  await chrome.action.setBadgeText({ text: '⏳' }).catch(() => {});
+  await chrome.action
+    .setBadgeBackgroundColor({ color: '#4CAF50' })
+    .catch(() => {});
+}
+
+async function collectPageContentOneByOne(tabsToProcess) {
+  // Show a loading badge while we process the tabs and until the content is pasted into the LLM page.
+  await showLoadingBadge();
+
+  const results = [];
+  try {
     for (const tab of tabsToProcess) {
       const content = await collectPageContent(tab);
       results.push(content);
     }
     return results;
-  } finally {
-    // Clear the badge once we're finished (or if an error occurs)
+  } catch (err) {
+    // Clear the badge if something goes wrong so we don't leave it stuck.
     await chrome.action.setBadgeText({ text: '' }).catch(() => {});
+    throw err;
   }
 }
 
@@ -93,6 +108,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       message.type === 'collect-page-content' &&
       Array.isArray(message.tabIds)
     ) {
+      showLoadingBadge(tabId);
+
       collectPageContentOneByOne(message.tabIds).then((contents) => {
         collectedContents = contents;
         chrome.tabs.update(tabId, { active: true }, () => {
@@ -101,6 +118,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     } else if (message.type === 'get-selected-tabs-data') {
       sendResponse({ tabs: collectedContents });
+    } else if (message.type === 'markdown-paste-complete') {
+      chrome.action.setBadgeText({ text: '', tabId }).catch(() => {});
+      chrome.action.setBadgeText({ text: '' }).catch(() => {});
     }
   });
 

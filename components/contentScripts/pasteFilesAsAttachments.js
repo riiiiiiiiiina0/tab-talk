@@ -89,6 +89,9 @@
 
         editor.dispatchEvent(pasteEvent);
       });
+
+      // Notify background that all markdown files have been pasted
+      chrome.runtime.sendMessage({ type: 'markdown-paste-complete' });
     },
   );
 })();

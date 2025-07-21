@@ -7,15 +7,13 @@
  * @typedef {Object} YtSubtitleEvent
  * @property {number} tStartMs - start time from the beginning of the video in milliseconds
  * @property {number} dDurationMs - duration of the event in milliseconds
- * @property {YtSubtitleSegment[]} segs
+ * @property {YtSubtitleSegment[]} [segs]
  */
 
 /**
  * @typedef {Object} YtSubtitleSegment
  * @property {string} utf8 - the text of the segment
  */
-
-const YT_SUBTITLE_RULE_ID = 1000;
 
 // cache subtitle data here for every opened youtube tab, key is video id
 const YT_SUBTITLE_CACHE = new Map();
@@ -48,10 +46,12 @@ async function handleSubtitleRequest(url, tabId) {
       .map((event) => {
         // convert tStartMs to HH:mm:ss format
         const startTime = new Date(event.tStartMs).toISOString().substr(11, 8);
-        return `${startTime}: ${event.segs
-          .map((seg) => seg.utf8)
-          .join(' ')
-          .replaceAll('\n', ' ')}`;
+        return `${startTime}: ${
+          event.segs
+            ?.map((seg) => seg.utf8)
+            .join(' ')
+            .replaceAll('\n', ' ') || ''
+        }`;
       })
       .join('\n');
 
@@ -66,10 +66,23 @@ async function handleSubtitleRequest(url, tabId) {
       const oldestKey = YT_SUBTITLE_CACHE.keys().next().value;
       YT_SUBTITLE_CACHE.delete(oldestKey);
     }
-    // console.log('[background] YouTube subtitle cached', videoId, '\n', captionText);
+    console.log(
+      '[background] YouTube subtitle cached',
+      videoId,
+      YT_SUBTITLE_CACHE.keys(),
+    );
   } catch (err) {
     console.error('[background] Error handling subtitle request', err);
   }
+}
+
+/**
+ * Get the cached caption for the given video id.
+ * @param {string} videoId
+ * @returns {string|null}
+ */
+export function getCachedCaption(videoId) {
+  return YT_SUBTITLE_CACHE.get(videoId) || null;
 }
 
 // Always use the WebRequest API (MV3-compatible) to observe YouTube subtitle
@@ -95,6 +108,7 @@ try {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || message.type !== 'get-youtube-caption') return;
 
+  console.log('[background] onMessage', message);
   const { videoId } = message;
   if (typeof videoId !== 'string' || !videoId) {
     sendResponse({ caption: null });

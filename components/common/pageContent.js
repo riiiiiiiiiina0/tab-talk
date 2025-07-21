@@ -1,4 +1,5 @@
 import { waitForTabLoad, waitForTabReady } from './tab.js';
+import { getCachedCaption } from './ytSubtitleIntercept.js';
 
 /**
  * Collected tab info
@@ -54,10 +55,6 @@ export function injectScriptToGetPageContent(tabId) {
         return;
       }
 
-      const isYouTubeWatch = /^https?:\/\/(?:www\.)?youtube\.com\/watch/.test(
-        tab.url || '',
-      );
-
       const doInject = () =>
         injectContentScripts(tabId, [
           'libs/turndown.7.2.0.js',
@@ -65,9 +62,25 @@ export function injectScriptToGetPageContent(tabId) {
           'components/contentScripts/getPageContentAsMarkdown.js',
         ]).then(resolve);
 
-      if (isYouTubeWatch) {
-        // Activate the tab first, then inject after it becomes ready.
-        chrome.tabs.update(tabId, { active: true }, () => doInject());
+      const isYouTubeWatch = /^https?:\/\/(?:www\.)?youtube\.com\/watch/.test(
+        tab.url || '',
+      );
+      const videoId = new URL(tab.url || '').searchParams.get('v');
+
+      if (isYouTubeWatch && videoId) {
+        // Try to determine whether captions for this video are already cached
+        // in the background service worker. If they are, we can skip the
+        // expensive "activate tab first" step and inject the extraction
+        // scripts directly.
+
+        // Ask the background script whether captions are cached.
+        const caption = getCachedCaption(videoId);
+
+        if (caption) {
+          doInject();
+        } else {
+          chrome.tabs.update(tabId, { active: true }, () => doInject());
+        }
       } else {
         doInject();
       }
