@@ -26,10 +26,11 @@ async function updateActionIcon(isDark) {
   };
 
   chrome.action.setIcon({ path: iconDict });
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const tab = tabs[0];
-    if (tab && tab.id !== undefined) {
-      chrome.action.setIcon({ path: iconDict, tabId: tab.id });
+  chrome.tabs.query({}, (tabs) => {
+    for (const tab of tabs) {
+      if (tab && tab.id !== undefined) {
+        chrome.action.setIcon({ path: iconDict, tabId: tab.id });
+      }
     }
   });
 }
@@ -166,4 +167,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   });
 
   return true;
+});
+
+/**
+ * Upon extension installation or update, read the preferred icon style from
+ * storage and refresh the action button icon so it immediately reflects the
+ * user setting.
+ */
+chrome.runtime.onInstalled.addListener(() => {
+  // We don't yet know the OS theme when the service-worker starts, so use the
+  // last known theme flag (defaults to false). The icon style will be fetched
+  // inside updateActionIcon().
+  updateActionIcon(lastIsDark);
 });
