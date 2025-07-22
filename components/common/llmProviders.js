@@ -1,11 +1,13 @@
 export const LLM_PROVIDER_CHATGPT = 'chatgpt';
 export const LLM_PROVIDER_GEMINI = 'gemini';
 export const LLM_PROVIDER_PERPLEXITY = 'perplexity';
+export const LLM_PROVIDER_CLAUDE = 'claude';
 export const LLM_PROVIDER_DEFAULT = LLM_PROVIDER_CHATGPT;
 export const SUPPORTED_LLM_PROVIDERS = [
   LLM_PROVIDER_CHATGPT,
   LLM_PROVIDER_GEMINI,
   LLM_PROVIDER_PERPLEXITY,
+  LLM_PROVIDER_CLAUDE,
 ];
 
 export const LLM_PROVIDER_META = {
@@ -20,6 +22,10 @@ export const LLM_PROVIDER_META = {
   [LLM_PROVIDER_PERPLEXITY]: {
     name: 'Perplexity',
     url: 'https://www.perplexity.ai',
+  },
+  [LLM_PROVIDER_CLAUDE]: {
+    name: 'Claude',
+    url: 'https://claude.ai',
   },
 };
 
@@ -42,7 +48,7 @@ export function getLLMProvider() {
 
 // Set the selected LLM value in Chrome sync storage. Accepts only 'chatgpt' or 'gemini'. Returns a Promise.
 /**
- * @param {string} value - The LLM value to set ('chatgpt' or 'gemini').
+ * @param {string} value - The LLM value to set ('chatgpt', 'gemini', 'perplexity', or 'claude').
  * @returns {Promise<void>} Resolves when the value is set.
  */
 export function setLLMProvider(value) {
