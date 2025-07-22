@@ -60,15 +60,6 @@
         "components/contentScripts/interceptYoutubeSubtitles.js"
       ],
       "run_at": "document_end"
-    },
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "components/contentScripts/detectThemeChange.js"
-      ],
-      "run_at": "document_start"
     }
   ]
 }

@@ -35,6 +35,15 @@ const iconStyleOptions = /** @type {HTMLDivElement|null} */ (
  */
 const createLLMOption = (provider) => {
   const name = LLM_PROVIDER_META[provider].name;
+  // Build a favicon URL (64×64) for the provider using its public site. This avoids bundling extra assets.
+  const faviconUrl = (() => {
+    try {
+      const { hostname } = new URL(LLM_PROVIDER_META[provider].url);
+      return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+    } catch {
+      return '';
+    }
+  })();
 
   const label = document.createElement('label');
   label.classList.add(
@@ -56,7 +65,14 @@ const createLLMOption = (provider) => {
     'justify-between',
   );
   label.innerHTML = `
-    <span class="label-text text-gray-600 dark:text-gray-300">${name}</span>
+    <div class="flex items-center space-x-2">
+      ${
+        faviconUrl
+          ? `<img src="${faviconUrl}" alt="${name} icon" class="w-6 h-6">`
+          : ''
+      }
+      <span class="label-text text-gray-600 dark:text-gray-300">${name}</span>
+    </div>
     <input type="radio" name="llm-option" class="radio radio-primary" value="${provider}" />
   `;
   return label;
@@ -81,6 +97,7 @@ function updateLLMOptionValue(provider, checked) {
  */
 const createIconStyleOption = (style) => {
   const name = ICON_STYLE_META[style].name;
+  const iconSrc = `../icons/${style}/icon-32x32.png`;
   const label = document.createElement('label');
   label.classList.add(
     'label',
@@ -101,7 +118,10 @@ const createIconStyleOption = (style) => {
     'justify-between',
   );
   label.innerHTML = `
-    <span class="label-text text-gray-600 dark:text-gray-300">${name}</span>
+    <div class="flex items-center space-x-2">
+      <img src="${iconSrc}" alt="${name} icon" class="w-6 h-6" />
+      <span class="label-text text-gray-600 dark:text-gray-300">${name}</span>
+    </div>
     <input type="radio" name="icon-style-option" class="radio radio-primary" value="${style}" />
   `;
   return label;
@@ -136,14 +156,14 @@ function showStatus(text) {
 
 /**
  * Updates the theme icon based on the current system theme
+ * @param {string} style
  */
-function updateThemeIcon() {
-  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+function updateThemeIcon(style) {
   const icon = /** @type {HTMLImageElement|null} */ (
     document.getElementById('theme-icon')
   );
-  if (icon && icon.dataset.darkSrc && icon.dataset.lightSrc) {
-    icon.src = isDark ? icon.dataset.darkSrc : icon.dataset.lightSrc;
+  if (icon) {
+    icon.src = `../icons/${style}/icon-128x128.png`;
   }
 }
 
@@ -160,6 +180,24 @@ function setHeaderIconForStyle(style) {
   const darkSrc = `../icons/${style}-dark/icon-128x128.png`;
   icon.dataset.lightSrc = lightSrc;
   icon.dataset.darkSrc = darkSrc;
+}
+
+/**
+ * Update data-* href attributes of the favicon link based on selected style.
+ * @param {string} style
+ */
+function setFaviconForStyle(style) {
+  let favicon = /** @type {HTMLLinkElement|null} */ (
+    document.getElementById('favicon')
+  );
+  if (!favicon) {
+    favicon = /** @type {HTMLLinkElement} */ (document.createElement('link'));
+    favicon.id = 'favicon';
+    favicon.rel = 'icon';
+    favicon.type = 'image/png';
+    document.head.appendChild(favicon);
+  }
+  favicon.href = `../icons/${style}/icon-32x32.png`;
 }
 
 async function init() {
@@ -186,8 +224,9 @@ async function init() {
   // Set the default Icon Style
   const iconStyle = await getIconStyle();
   setHeaderIconForStyle(iconStyle);
+  setFaviconForStyle(iconStyle);
   updateIconStyleOptionValue(iconStyle, true);
-  updateThemeIcon();
+  updateThemeIcon(iconStyle);
 
   // Save on button click
   if (saveButton) {
@@ -203,7 +242,8 @@ async function init() {
       Promise.all([setLLMProvider(value), setIconStyle(iconValue)])
         .then(() => {
           setHeaderIconForStyle(iconValue);
-          updateThemeIcon();
+          setFaviconForStyle(iconValue);
+          updateThemeIcon(iconValue);
           try {
             chrome.runtime.sendMessage({ type: 'icon-style-changed' });
           } catch {}
@@ -214,10 +254,7 @@ async function init() {
   }
 
   // Initialize theme icon and set up theme change listener
-  updateThemeIcon();
-  window
-    .matchMedia('(prefers-color-scheme: dark)')
-    .addEventListener('change', updateThemeIcon);
+  updateThemeIcon(iconStyle);
 }
 
 init();

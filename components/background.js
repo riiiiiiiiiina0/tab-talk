@@ -1,59 +1,23 @@
 import './common/actionButtonBehavior.js';
 import './common/ytSubtitleIntercept.js';
+import {
+  showLoadingBadge,
+  clearLoadingBadge,
+  updateActionIcon,
+} from './common/actionButton.js';
 import { LLM_PROVIDER_META, getLLMProvider } from './common/llmProviders.js';
 import {
   collectPageContent,
   injectScriptToPasteFilesAsAttachments,
 } from './common/pageContent.js';
-import { getIconStyle } from './common/iconStyle.js';
 
 let collectedContents = [];
-let lastIsDark = false;
 
 /**
- * Update the extension action icon based on theme and selected icon style.
- * @param {boolean} isDark Whether the OS theme is dark.
+ * Collect page content from the given tabs one by one.
+ * @param {(number|undefined)[]} tabsToProcess
+ * @returns {Promise<(import('./common/pageContent.js').CollectedTabInfo | null)[]>}
  */
-async function updateActionIcon(isDark) {
-  const style = await getIconStyle();
-  const baseName = style === 'simple' ? 'simple' : 'rainbow';
-  const iconName = isDark ? `${baseName}-dark` : baseName;
-  const iconDict = {
-    16: `/icons/${iconName}/icon-16x16.png`,
-    32: `/icons/${iconName}/icon-32x32.png`,
-    48: `/icons/${iconName}/icon-48x48.png`,
-    128: `/icons/${iconName}/icon-128x128.png`,
-  };
-
-  chrome.action.setIcon({ path: iconDict });
-  chrome.tabs.query({}, (tabs) => {
-    for (const tab of tabs) {
-      if (tab && tab.id !== undefined) {
-        chrome.action.setIcon({ path: iconDict, tabId: tab.id });
-      }
-    }
-  });
-}
-
-/**
- * Show a loading badge on the action button.
- * @param {number} [tabId] - The tab ID to show the badge on.
- */
-async function showLoadingBadge(tabId) {
-  // On Vivaldi, the badge is not updated on current tab on the action button, unless we set it on the current tab.
-  if (tabId) {
-    await chrome.action.setBadgeText({ text: '⏳', tabId }).catch(() => {});
-    await chrome.action
-      .setBadgeBackgroundColor({ color: '#4CAF50', tabId })
-      .catch(() => {});
-  }
-
-  await chrome.action.setBadgeText({ text: '⏳' }).catch(() => {});
-  await chrome.action
-    .setBadgeBackgroundColor({ color: '#4CAF50' })
-    .catch(() => {});
-}
-
 async function collectPageContentOneByOne(tabsToProcess) {
   // Show a loading badge while we process the tabs and until the content is pasted into the LLM page.
   await showLoadingBadge();
@@ -64,10 +28,16 @@ async function collectPageContentOneByOne(tabsToProcess) {
       const content = await collectPageContent(tab);
       results.push(content);
     }
+
+    // In case of fail to collect content from page or timeout, make sure the badge is cleared.
+    if (results.some((r) => r === null || r.markdown === '')) {
+      await clearLoadingBadge();
+    }
+
     return results;
   } catch (err) {
     // Clear the badge if something goes wrong so we don't leave it stuck.
-    await chrome.action.setBadgeText({ text: '' }).catch(() => {});
+    await clearLoadingBadge();
     throw err;
   }
 }
@@ -125,18 +95,8 @@ chrome.action.onClicked.addListener(async (activeTab) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) return;
 
-  // Handle OS theme changes (sent from detectThemeChange.js)
-  if (
-    message.type === 'os-theme-changed' &&
-    typeof message.dark === 'boolean'
-  ) {
-    lastIsDark = !!message.dark;
-    updateActionIcon(lastIsDark);
-    return;
-  }
-
   if (message.type === 'icon-style-changed') {
-    updateActionIcon(lastIsDark);
+    updateActionIcon();
     return;
   }
 
@@ -161,22 +121,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else if (message.type === 'get-selected-tabs-data') {
       sendResponse({ tabs: collectedContents });
     } else if (message.type === 'markdown-paste-complete') {
-      chrome.action.setBadgeText({ text: '', tabId }).catch(() => {});
-      chrome.action.setBadgeText({ text: '' }).catch(() => {});
+      clearLoadingBadge(tabId);
     }
   });
 
   return true;
 });
 
-/**
- * Upon extension installation or update, read the preferred icon style from
- * storage and refresh the action button icon so it immediately reflects the
- * user setting.
- */
+// Ensure the correct icon is applied immediately after the extension is installed or updated
 chrome.runtime.onInstalled.addListener(() => {
-  // We don't yet know the OS theme when the service-worker starts, so use the
-  // last known theme flag (defaults to false). The icon style will be fetched
-  // inside updateActionIcon().
-  updateActionIcon(lastIsDark);
+  updateActionIcon();
 });
