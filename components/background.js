@@ -16,6 +16,10 @@ let collectedContents = [];
 // Flag to indicate we are in the middle of collecting page contents / waiting for paste to complete
 let isProcessing = false;
 
+// Track the LLM provider tab that we inject the paste script into so that we
+// can clear the loading badge if the tab is closed before the paste completes.
+let llmTabId = null;
+
 /**
  * Collect page content from the given tabs one by one.
  * @param {(number|undefined)[]} tabsToProcess
@@ -90,6 +94,7 @@ chrome.action.onClicked.addListener(async (activeTab) => {
     const url = meta.url;
     const tab = await chrome.tabs.create({ url, active: true });
     if (tab.id) {
+      llmTabId = tab.id; // record the tab so we know which one to watch
       injectScriptToPasteFilesAsAttachments(tab.id);
     }
   } catch (err) {
@@ -128,6 +133,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         collectedContents = contents;
         chrome.tabs.update(tabId, { active: true }, () => {
           injectScriptToPasteFilesAsAttachments(tabId);
+          llmTabId = tabId; // record the tab so we know which one to watch
         });
       });
     } else if (message.type === 'get-selected-tabs-data') {
@@ -135,10 +141,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else if (message.type === 'markdown-paste-complete') {
       clearLoadingBadge();
       isProcessing = false;
+      llmTabId = null;
     }
   });
 
   return true;
+});
+
+// If the LLM tab is closed before we receive the "markdown-paste-complete"
+// message, make sure we clear the loading badge so it doesn't remain stuck.
+chrome.tabs.onRemoved.addListener((removedTabId) => {
+  if (removedTabId === llmTabId && isProcessing) {
+    clearLoadingBadge();
+    isProcessing = false;
+    llmTabId = null;
+  }
 });
 
 // Ensure the correct icon is applied immediately after the extension is installed or updated
