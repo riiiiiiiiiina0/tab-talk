@@ -24,33 +24,11 @@
     "default_title": "TabTalk",
     "default_popup": "components/popup.html"
   },
+  "options_page": "components/options.html",
   "background": {
     "service_worker": "components/background.js",
     "type": "module"
   },
-  "options_page": "components/options.html",
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "libs/turndown.7.2.0.js",
-        "libs/turndown-plugin-gfm.1.0.2.js"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
-    },
-    {
-      "resources": [
-        "icons/rainbow/*.png",
-        "icons/rainbow-dark/*.png",
-        "icons/simple/*.png",
-        "icons/simple-dark/*.png"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
-    }
-  ],
   "content_scripts": [
     {
       "matches": [
@@ -60,6 +38,25 @@
         "components/contentScripts/interceptYoutubeSubtitles.js"
       ],
       "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "https://www.notion.so/*"
+      ],
+      "js": [
+        "components/contentScripts/interceptNotionRequests.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "components/contentScripts/notionFetchInterceptor.js"
+      ],
+      "matches": [
+        "https://www.notion.so/*"
+      ]
     }
   ]
 }
