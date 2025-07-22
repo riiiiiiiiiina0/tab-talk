@@ -7,7 +7,7 @@ import { getCachedCaption } from './ytSubtitleIntercept.js';
  * @property {number} tabId
  * @property {string} title
  * @property {string} url
- * @property {string} markdown
+ * @property {string} content
  */
 
 /**
@@ -45,22 +45,18 @@ export function injectScriptToGetPageContent(tabId) {
    */
   return new Promise((resolve) => {
     chrome.tabs.get(tabId, (tab) => {
+      const scripts = [
+        'libs/turndown.7.2.0.js',
+        'libs/turndown-plugin-gfm.1.0.2.js',
+        'components/contentScripts/getPageContentAsMarkdown.js',
+      ];
       if (chrome.runtime.lastError || !tab) {
         // Fallback – just inject the scripts
-        injectContentScripts(tabId, [
-          'libs/turndown.7.2.0.js',
-          'libs/turndown-plugin-gfm.1.0.2.js',
-          'components/contentScripts/getPageContentAsMarkdown.js',
-        ]).then(resolve);
+        injectContentScripts(tabId, scripts).then(resolve);
         return;
       }
 
-      const doInject = () =>
-        injectContentScripts(tabId, [
-          'libs/turndown.7.2.0.js',
-          'libs/turndown-plugin-gfm.1.0.2.js',
-          'components/contentScripts/getPageContentAsMarkdown.js',
-        ]).then(resolve);
+      const doInject = () => injectContentScripts(tabId, scripts).then(resolve);
 
       const isYouTubeWatch = /^https?:\/\/(?:www\.)?youtube\.com\/watch/.test(
         tab.url || '',
@@ -101,7 +97,7 @@ export function injectScriptToPasteFilesAsAttachments(tabId) {
 
 /**
  * Collect the Markdown representation of the given tab's page.
- * Resolves to an object containing title, url, and markdown (or `null` on timeout).
+ * Resolves to an object containing title, url, and content (or `null` on timeout).
  * @param {number|undefined} tabId
  * @param {number} [timeout=5000]
  * @returns {Promise<CollectedTabInfo|null>}
@@ -120,7 +116,7 @@ export async function collectPageContent(tabId, timeout = 10_000) {
      */
     const onMessage = (message, sender) => {
       if (sender?.tab?.id !== tabId) return;
-      if (!message || typeof message.markdown !== 'string') return;
+      if (!message || typeof message.content !== 'string') return;
 
       clearTimeout(timeoutId);
       chrome.runtime.onMessage.removeListener(onMessage);
@@ -129,7 +125,7 @@ export async function collectPageContent(tabId, timeout = 10_000) {
         tabId,
         title: message.title || '',
         url: message.url || '',
-        markdown: message.markdown,
+        content: message.content,
       };
 
       resolve(result);

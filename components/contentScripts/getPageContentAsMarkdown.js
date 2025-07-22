@@ -234,22 +234,22 @@
   }
 
   async function getPageContent() {
-    let markdown = '';
+    let content = '';
     if (
       /(?:www\.)?youtube\.com$/.test(location.hostname) &&
       location.pathname.startsWith('/watch')
     ) {
-      markdown = await getYouTubeContent();
+      content = await getYouTubeContent();
     } else {
-      markdown = await getGeneralPageContent();
+      content = await getGeneralPageContent();
     }
 
-    // Send the markdown back to the background script
+    // Send the content back to the background script
     chrome.runtime.sendMessage({
       type: 'page-content-collected',
       title: document.title,
       url: document.location.href,
-      markdown,
+      content,
     });
   }
 

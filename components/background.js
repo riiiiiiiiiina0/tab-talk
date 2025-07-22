@@ -30,7 +30,7 @@ async function collectPageContentOneByOne(tabsToProcess) {
     }
 
     // In case of fail to collect content from page or timeout, make sure the badge is cleared.
-    if (results.some((r) => r === null || r.markdown === '')) {
+    if (results.some((r) => r === null || r.content === '')) {
       await clearLoadingBadge();
     }
 

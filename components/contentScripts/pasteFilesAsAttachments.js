@@ -49,13 +49,11 @@
       }
 
       tabs.forEach((tab, idx) => {
-        const { title, url, markdown } = tab;
+        const { title, url, content } = tab;
 
-        if (!markdown) {
+        if (!content) {
           console.warn(
-            `[parseFilesAsAttachments] No markdown content found for tab ${
-              idx + 1
-            }.`,
+            `[parseFilesAsAttachments] No content found for tab ${idx + 1}.`,
             tab,
           );
           return;
@@ -66,7 +64,7 @@
             title || `Tab ${idx + 1}`
           }" (URL: ${url})`,
           `---`,
-          markdown || '<no content>',
+          content || '<no content>',
         ].join('\n\n');
 
         const fileName = `${(title || `tab-${idx + 1}`).replace(
