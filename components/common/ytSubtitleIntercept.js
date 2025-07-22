@@ -61,7 +61,7 @@ async function handleSubtitleRequest(url, tabId) {
       YT_SUBTITLE_CACHE.delete(videoId);
     }
     YT_SUBTITLE_CACHE.set(videoId, captionText);
-    if (YT_SUBTITLE_CACHE.size > 20) {
+    if (YT_SUBTITLE_CACHE.size > 50) {
       // The first key in the Map is the oldest entry.
       const oldestKey = YT_SUBTITLE_CACHE.keys().next().value;
       YT_SUBTITLE_CACHE.delete(oldestKey);
