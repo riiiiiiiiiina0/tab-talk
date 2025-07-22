@@ -1,6 +1,6 @@
 # 🗂️💬 TabTalk
 
-A browser extension for any **Chromium-based browser** (Chrome, Edge, Brave, etc.) that lets you **chat with your open browser tabs**. Select a couple of pages, hit **Use as context** and watch them appear inside ChatGPT (or Gemini) as handy Markdown attachments. Perfect for asking things like:
+A browser extension for any **Chromium-based browser** (Chrome, Edge, Brave, etc.) that lets you **chat with your open browser tabs**. Because it piggybacks on the ChatGPT/Gemini/Claude/Perplexity service you already using, there's **no extra subscription to buy and no API keys to paste** – just use the LLM service you already pay for. Select a couple of pages, hit the extension action button and watch them appear inside ChatGPT/Gemini/Claude/Perplexity as handy Markdown attachments. Perfect for asking things like:
 
 - "Summarise these docs"
 - "Compare these products"
@@ -20,7 +20,7 @@ A browser extension for any **Chromium-based browser** (Chrome, Edge, Brave, etc
 
 - 🔍 Lists every open tab in the current window (excluding the active one – because ChatGPT is probably there!).
 - 😴 Detects and marks sleeping/discarded tabs so you know they might take a moment to wake up.
-- ✔️ Multi-select via friendly checkboxes.
+- 💸 Works with your existing ChatGPT/Gemini (or any web LLM) subscription – no extra fees, log-ins, or API keys required.
 - 🚀 Converts each selected page to **clean Markdown** thanks to [Turndown](https://github.com/mixmark-io/turndown) with GFM support.
 - 📎 Seamlessly pastes the Markdown into ChatGPT/Gemini as **file attachments** using a synthetic clipboard event – no manual copy-paste required.
 - ⏳ Inline loading indicator and timeout handling, so you’re never left wondering.
