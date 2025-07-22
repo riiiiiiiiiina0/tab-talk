@@ -243,6 +243,7 @@
     let content = '';
     if (
       /(?:www\.)?youtube\.com$/.test(location.hostname) &&
+      location.hostname !== 'music.youtube.com' &&
       location.pathname.startsWith('/watch')
     ) {
       content = await getYouTubeContent();
