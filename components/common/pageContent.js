@@ -46,6 +46,7 @@ export function injectScriptToGetPageContent(tabId) {
   return new Promise((resolve) => {
     chrome.tabs.get(tabId, (tab) => {
       const scripts = [
+        'libs/readability.min.js',
         'libs/turndown.7.2.0.js',
         'libs/turndown-plugin-gfm.1.0.2.js',
         'components/contentScripts/getPageContentAsMarkdown.js',

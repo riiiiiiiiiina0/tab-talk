@@ -196,6 +196,10 @@
       )
       .forEach((el) => el.remove());
 
+    // @ts-ignore
+    const article = new Readability(clone).parse();
+    const html = article.content || '';
+
     /**
      * TurndownService is a constructor for creating a new Turndown service instance.
      * @class
@@ -228,7 +232,9 @@
       replacement: () => '',
     });
 
-    const markdown = turndownService.turndown(clone.body.innerHTML);
+    const markdown = turndownService.turndown(html);
+
+    console.log('markdown:\n', markdown);
 
     return markdown;
   }
