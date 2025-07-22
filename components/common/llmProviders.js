@@ -1,9 +1,11 @@
 export const LLM_PROVIDER_CHATGPT = 'chatgpt';
 export const LLM_PROVIDER_GEMINI = 'gemini';
+export const LLM_PROVIDER_PERPLEXITY = 'perplexity';
 export const LLM_PROVIDER_DEFAULT = LLM_PROVIDER_CHATGPT;
 export const SUPPORTED_LLM_PROVIDERS = [
   LLM_PROVIDER_CHATGPT,
   LLM_PROVIDER_GEMINI,
+  LLM_PROVIDER_PERPLEXITY,
 ];
 
 export const LLM_PROVIDER_META = {
@@ -14,6 +16,10 @@ export const LLM_PROVIDER_META = {
   [LLM_PROVIDER_GEMINI]: {
     name: 'Gemini',
     url: 'https://gemini.google.com',
+  },
+  [LLM_PROVIDER_PERPLEXITY]: {
+    name: 'Perplexity',
+    url: 'https://www.perplexity.ai',
   },
 };
 

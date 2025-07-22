@@ -3,8 +3,6 @@ import {
   LLM_PROVIDER_DEFAULT,
   getLLMProvider,
   setLLMProvider,
-  LLM_PROVIDER_GEMINI,
-  LLM_PROVIDER_CHATGPT,
   LLM_PROVIDER_META,
 } from './common/llmProviders.js';
 import {
@@ -68,7 +66,7 @@ const createLLMOption = (provider) => {
     <div class="flex items-center space-x-2">
       ${
         faviconUrl
-          ? `<img src="${faviconUrl}" alt="${name} icon" class="w-6 h-6">`
+          ? `<img src="${faviconUrl}" alt="${name} icon" class="w-6 h-6 rounded">`
           : ''
       }
       <span class="label-text text-gray-600 dark:text-gray-300">${name}</span>
