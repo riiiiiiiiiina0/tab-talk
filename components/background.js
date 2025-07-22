@@ -13,12 +13,17 @@ import {
 
 let collectedContents = [];
 
+// Flag to indicate we are in the middle of collecting page contents / waiting for paste to complete
+let isProcessing = false;
+
 /**
  * Collect page content from the given tabs one by one.
  * @param {(number|undefined)[]} tabsToProcess
  * @returns {Promise<(import('./common/pageContent.js').CollectedTabInfo | null)[]>}
  */
 async function collectPageContentOneByOne(tabsToProcess) {
+  // Mark processing so subsequent action clicks are ignored until we finish and clear the badge
+  isProcessing = true;
   // Show a loading badge while we process the tabs and until the content is pasted into the LLM page.
   await showLoadingBadge();
 
@@ -32,12 +37,14 @@ async function collectPageContentOneByOne(tabsToProcess) {
     // In case of fail to collect content from page or timeout, make sure the badge is cleared.
     if (results.some((r) => r === null || r.content === '')) {
       await clearLoadingBadge();
+      isProcessing = false;
     }
 
     return results;
   } catch (err) {
     // Clear the badge if something goes wrong so we don't leave it stuck.
     await clearLoadingBadge();
+    isProcessing = false;
     throw err;
   }
 }
@@ -48,6 +55,11 @@ async function collectPageContentOneByOne(tabsToProcess) {
  * @param {chrome.tabs.Tab} activeTab
  */
 chrome.action.onClicked.addListener(async (activeTab) => {
+  // Ignore the click if we are already processing a previous request
+  if (isProcessing) {
+    console.log('[background] still processing, click ignored');
+    return;
+  }
   try {
     const highlighted = await chrome.tabs.query({
       currentWindow: true,
@@ -122,6 +134,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ tabs: collectedContents });
     } else if (message.type === 'markdown-paste-complete') {
       clearLoadingBadge();
+      isProcessing = false;
     }
   });
 
