@@ -25,36 +25,42 @@ export async function updateActionIcon() {
 
 /**
  * Show a loading badge on the action button.
- * @param {number} [tabId] - The tab ID to show the badge on.
  */
-export async function showLoadingBadge(tabId) {
-  setActionButtonBadge('Loading', tabId);
+export async function showLoadingBadge() {
+  setActionButtonBadge('Loading');
 }
 
 /**
  * Set the action button badge text and background color.
  * @param {string} text - The text to display on the badge.
- * @param {number} [tabId] - The tab ID to set the badge on.
  */
-export function setActionButtonBadge(text, tabId) {
-  // On Vivaldi, the badge is not updated on current tab on the action button, unless we set it on the current tab.
-  if (tabId) {
-    chrome.action.setBadgeText({ text, tabId }).catch(() => {});
-    chrome.action
-      .setBadgeBackgroundColor({ color: '#4CAF50', tabId })
-      .catch(() => {});
-  }
+export function setActionButtonBadge(text) {
   chrome.action.setBadgeText({ text }).catch(() => {});
   chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' }).catch(() => {});
+
+  chrome.tabs.query({}, (tabs) => {
+    for (const tab of tabs) {
+      if (tab && tab.id !== undefined) {
+        chrome.action.setBadgeText({ text, tabId: tab.id }).catch(() => {});
+        chrome.action
+          .setBadgeBackgroundColor({ color: '#4CAF50', tabId: tab.id })
+          .catch(() => {});
+      }
+    }
+  });
 }
 
 /**
  * Clear the loading badge on the action button.
- * @param {number} [tabId] - The tab ID to clear the badge on.
  */
-export async function clearLoadingBadge(tabId) {
-  if (tabId) {
-    await chrome.action.setBadgeText({ text: '', tabId }).catch(() => {});
-  }
+export async function clearLoadingBadge() {
   await chrome.action.setBadgeText({ text: '' }).catch(() => {});
+
+  chrome.tabs.query({}, (tabs) => {
+    for (const tab of tabs) {
+      if (tab && tab.id !== undefined) {
+        chrome.action.setBadgeText({ text: '', tabId: tab.id }).catch(() => {});
+      }
+    }
+  });
 }

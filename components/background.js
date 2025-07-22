@@ -110,7 +110,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       message.type === 'collect-page-content' &&
       Array.isArray(message.tabIds)
     ) {
-      showLoadingBadge(tabId);
+      showLoadingBadge();
 
       collectPageContentOneByOne(message.tabIds).then((contents) => {
         collectedContents = contents;
@@ -121,7 +121,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else if (message.type === 'get-selected-tabs-data') {
       sendResponse({ tabs: collectedContents });
     } else if (message.type === 'markdown-paste-complete') {
-      clearLoadingBadge(tabId);
+      clearLoadingBadge();
     }
   });
 
