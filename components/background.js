@@ -30,7 +30,7 @@ async function collectPageContentOneByOne(tabsToProcess) {
     }
 
     // In case of fail to collect content from page or timeout, make sure the badge is cleared.
-    if (results.some((r) => r === null || r.markdown === '')) {
+    if (results.some((r) => r === null || !r.content)) {
       await clearLoadingBadge();
     }
 
@@ -67,6 +67,7 @@ chrome.action.onClicked.addListener(async (activeTab) => {
     const tabIds = tabsToProcess.map((tab) => tab.id);
 
     collectedContents = await collectPageContentOneByOne(tabIds);
+    console.log('[background] collected contents:', collectedContents);
 
     // open llm page & paste in page content
     const llmProvider = await getLLMProvider();
@@ -119,7 +120,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
       });
     } else if (message.type === 'get-selected-tabs-data') {
-      sendResponse({ tabs: collectedContents });
+      console.log(
+        '[background] get-selected-tabs-data, sending collected contents:',
+        collectedContents,
+      );
+      sendResponse({ contents: collectedContents });
     } else if (message.type === 'markdown-paste-complete') {
       clearLoadingBadge(tabId);
     }

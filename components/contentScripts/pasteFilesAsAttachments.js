@@ -31,8 +31,14 @@
   chrome.runtime.sendMessage(
     { type: 'get-selected-tabs-data' },
     async (response) => {
-      const tabs = Array.isArray(response?.tabs) ? response.tabs : [];
-      if (tabs.length === 0) {
+      console.log(
+        '[pasteFilesAsAttachments] get-selected-tabs-data, received collected contents:',
+        response,
+      );
+      const contents = Array.isArray(response?.contents)
+        ? response.contents
+        : [];
+      if (contents.length === 0) {
         console.warn(
           '[parseFilesAsAttachments] No selected tab data received.',
         );
@@ -48,47 +54,70 @@
         return;
       }
 
-      tabs.forEach((tab, idx) => {
-        const { title, url, markdown } = tab;
+      contents.forEach(
+        /**
+         * @param {import('../common/pageContent').CollectedTabInfo} item
+         * @param {number} idx
+         * @returns {void}
+         */
+        (item, idx) => {
+          const { title, url, content } = item;
 
-        if (!markdown) {
-          console.warn(
-            `[parseFilesAsAttachments] No markdown content found for tab ${
-              idx + 1
-            }.`,
-            tab,
-          );
-          return;
-        }
+          if (!content) {
+            console.warn(
+              `[parseFilesAsAttachments] No markdown content found for tab ${
+                idx + 1
+              }.`,
+              item,
+            );
+            return;
+          }
 
-        const fileContent = [
-          `Please treat this as the content of a web page titled "${
-            title || `Tab ${idx + 1}`
-          }" (URL: ${url})`,
-          `---`,
-          markdown || '<no content>',
-        ].join('\n\n');
+          let file;
+          if (!content.startsWith('data:application/pdf;')) {
+            const fileContent = [
+              `Please treat this as the content of a web page titled "${
+                title || `Tab ${idx + 1}`
+              }" (URL: ${url})`,
+              `---`,
+              content || '<no content>',
+            ].join('\n\n');
 
-        const fileName = `${(title || `tab-${idx + 1}`).replace(
-          /[^a-z0-9\-_]+/gi,
-          '_',
-        )}.md`;
-        const file = new File([fileContent], fileName, {
-          type: 'text/markdown',
-          lastModified: Date.now(),
-        });
+            const fileName = `${(title || `tab-${idx + 1}`).replace(
+              /[^a-z0-9\-_]+/gi,
+              '_',
+            )}.md`;
+            file = new File([fileContent], fileName, {
+              type: 'text/markdown',
+              lastModified: Date.now(),
+            });
+          } else {
+            // parse base64 encoded string ("data:application/pdf;filename=generated.pdf;base64,...") into pdf file
+            const base64Data = content.split(',')[1];
+            const pdfBlob = atob(base64Data);
+            const pdfFile = new File(
+              [pdfBlob],
+              `${title || `tab-${idx + 1}`}.pdf`,
+              {
+                type: 'application/pdf',
+                lastModified: Date.now(),
+              },
+            );
+            file = pdfFile;
+          }
 
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
 
-        const pasteEvent = new ClipboardEvent('paste', {
-          clipboardData: dataTransfer,
-          bubbles: true,
-          cancelable: true,
-        });
+          const pasteEvent = new ClipboardEvent('paste', {
+            clipboardData: dataTransfer,
+            bubbles: true,
+            cancelable: true,
+          });
 
-        editor.dispatchEvent(pasteEvent);
-      });
+          editor.dispatchEvent(pasteEvent);
+        },
+      );
 
       // Notify background that all markdown files have been pasted
       chrome.runtime.sendMessage({ type: 'markdown-paste-complete' });

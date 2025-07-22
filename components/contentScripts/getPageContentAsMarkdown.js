@@ -233,24 +233,85 @@
     return markdown;
   }
 
+  /**
+   * Get the page content as a PDF file.
+   * @returns {Promise<string>}
+   */
+  async function getGeneralPageContentAsPdf() {
+    return new Promise((resolve) => {
+      const clone = /** @type {Document} */ (document.cloneNode(true));
+
+      // @ts-ignore
+      const readability = new Readability(clone);
+      const article = readability.parse();
+
+      // Create a temporary, hidden div to hold the simplified HTML.
+      // This is where we'll apply our custom styling for the PDF.
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `<h1>${article.title}</h1>${article.content}`;
+
+      // Style the container for PDF output
+      contentDiv.style.width = '210mm'; // A4 width
+      contentDiv.style.padding = '15mm'; // Add some margin
+      contentDiv.style.boxSizing = 'border-box';
+      contentDiv.style.fontFamily = 'Helvetica, Arial, sans-serif'; // Set a clean font
+      contentDiv.style.fontSize = '12px'; // Set the base font size to 12px
+      contentDiv.style.lineHeight = '1.5';
+
+      // We append it to the body to let html2canvas render it, but make it invisible.
+      contentDiv.style.position = 'absolute';
+      contentDiv.style.top = '-9999px';
+      contentDiv.style.left = '-9999px';
+      document.body.appendChild(contentDiv);
+
+      setTimeout(() => {
+        // @ts-ignore
+        const pdf = new jspdf.jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+        });
+
+        pdf.html(contentDiv, {
+          x: 0,
+          y: 0,
+          // This option ensures the entire HTML content is rendered, creating new pages as needed.
+          autoPaging: 'text',
+          html2canvas: {
+            scale: 0.23, // Lower scale can improve performance and stability
+            useCORS: true, // Attempt to load images from other domains
+          },
+          callback: (doc) => {
+            const fileContent = doc.output('datauristring');
+            resolve(fileContent);
+          },
+        });
+      }, 500);
+    });
+  }
+
   async function getPageContent() {
-    let markdown = '';
+    /** @type {string} */
+    let content = '';
+
     if (
       /(?:www\.)?youtube\.com$/.test(location.hostname) &&
       location.pathname.startsWith('/watch')
     ) {
-      markdown = await getYouTubeContent();
+      content = await getYouTubeContent();
     } else {
-      markdown = await getGeneralPageContent();
+      // content = await getGeneralPageContent();
+      content = await getGeneralPageContentAsPdf();
     }
 
     // Send the markdown back to the background script
-    chrome.runtime.sendMessage({
+    const pageContent = {
       type: 'page-content-collected',
       title: document.title,
       url: document.location.href,
-      markdown,
-    });
+      content,
+    };
+    chrome.runtime.sendMessage(pageContent);
   }
 
   getPageContent();

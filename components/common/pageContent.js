@@ -7,7 +7,7 @@ import { getCachedCaption } from './ytSubtitleIntercept.js';
  * @property {number} tabId
  * @property {string} title
  * @property {string} url
- * @property {string} markdown
+ * @property {string} content
  */
 
 /**
@@ -44,23 +44,23 @@ export function injectScriptToGetPageContent(tabId) {
    * proceed with the normal injection chain.
    */
   return new Promise((resolve) => {
+    const scripts = [
+      'libs/readability.min.js',
+      'libs/dompurify.min.js',
+      'libs/html2canvas.min.js',
+      'libs/jspdf.umd.min.js',
+      'libs/turndown.7.2.0.js',
+      'libs/turndown-plugin-gfm.1.0.2.js',
+      'components/contentScripts/getPageContentAsMarkdown.js',
+    ];
     chrome.tabs.get(tabId, (tab) => {
       if (chrome.runtime.lastError || !tab) {
         // Fallback – just inject the scripts
-        injectContentScripts(tabId, [
-          'libs/turndown.7.2.0.js',
-          'libs/turndown-plugin-gfm.1.0.2.js',
-          'components/contentScripts/getPageContentAsMarkdown.js',
-        ]).then(resolve);
+        injectContentScripts(tabId, scripts).then(resolve);
         return;
       }
 
-      const doInject = () =>
-        injectContentScripts(tabId, [
-          'libs/turndown.7.2.0.js',
-          'libs/turndown-plugin-gfm.1.0.2.js',
-          'components/contentScripts/getPageContentAsMarkdown.js',
-        ]).then(resolve);
+      const doInject = () => injectContentScripts(tabId, scripts).then(resolve);
 
       const isYouTubeWatch = /^https?:\/\/(?:www\.)?youtube\.com\/watch/.test(
         tab.url || '',
@@ -120,7 +120,12 @@ export async function collectPageContent(tabId, timeout = 10_000) {
      */
     const onMessage = (message, sender) => {
       if (sender?.tab?.id !== tabId) return;
-      if (!message || typeof message.markdown !== 'string') return;
+      if (
+        !message ||
+        (typeof message.content !== 'string' &&
+          !(message.content instanceof Blob))
+      )
+        return;
 
       clearTimeout(timeoutId);
       chrome.runtime.onMessage.removeListener(onMessage);
@@ -129,7 +134,7 @@ export async function collectPageContent(tabId, timeout = 10_000) {
         tabId,
         title: message.title || '',
         url: message.url || '',
-        markdown: message.markdown,
+        content: message.content,
       };
 
       resolve(result);
