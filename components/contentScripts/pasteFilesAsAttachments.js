@@ -62,7 +62,7 @@
         const fileContent = [
           `Please treat this as the content of a web page titled "${
             title || `Tab ${idx + 1}`
-          }" (URL: ${url})`,
+          }" (URL: ${url}). If a <selectedText> section is present, please pay special attention to it and consider it higher priority than the rest of the content.`,
           `---`,
           content || '<no content>',
         ].join('\n\n');
