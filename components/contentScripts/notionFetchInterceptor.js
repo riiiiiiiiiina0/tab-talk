@@ -4,21 +4,19 @@ const originalFetch = window.fetch;
 // The target Notion API endpoint we want to intercept
 const NOTION_CHUNKS_ENDPOINT = '/api/v3/loadCachedPageChunks';
 
+let blocks = {};
+
 // === Added: Minimal Notion → Markdown helper ===
 /**
  * Convert Notion's recordMap object to a Markdown string.
  * This is **very** simplified – it handles common block types that appear in
  * personal notes (headings, paragraphs, lists, to-dos).
  *
- * @param {any} recordMap The recordMap returned by /loadCachedPageChunks.
+ * @param {any} blocks The blocks returned by /loadCachedPageChunks.
  * @returns {string} Markdown string.
  */
-function notionRecordMapToMarkdown(recordMap) {
-  if (!recordMap || !recordMap.block) {
-    return '';
-  }
-
-  const blocks = recordMap.block;
+function notionRecordMapToMarkdown(blocks) {
+  if (!blocks) return '';
 
   // Helper to safely get the underlying block value
   const getBlock = (id) => {
@@ -138,22 +136,43 @@ window.fetch = async function (...args) {
 
       // Read the response body as JSON
       const responseData = await clonedResponse.json();
+      console.log(
+        '[Notion API request interceptor]',
+        'responseData',
+        responseData,
+      );
+
+      blocks = { ...blocks, ...responseData.recordMap.block };
 
       // 👉 Parse the recordMap into Markdown
-      const markdown = notionRecordMapToMarkdown(responseData?.recordMap);
+      const markdown = notionRecordMapToMarkdown(blocks);
+
+      // https://www.notion.so/oscartong/Tab-Talk-2317aa7407c180c5b0e8d3cd45615e52
+      const url = new URL(location.href);
+      const pageId = url.pathname.split('/').pop()?.split('-').pop() || '';
 
       // Log or process the intercepted data
       console.log(
         '[Notion API request interceptor]',
         'Intercepted Notion loadCachedPageChunks response as markdown:',
+        pageId,
         markdown,
       );
 
-      // // You can also send this data to the extension's background script if needed
-      // chrome.runtime.sendMessage({
-      //   type: 'NOTION_PAGE_CHUNKS_MARKDOWN',
-      //   data: markdown,
-      // });
+      // Send the data to the content script via window.postMessage, which will then
+      // forward it to the extension background script (page context does not have
+      // access to chrome.runtime).
+      window.postMessage(
+        {
+          source: 'tabtalk-extension',
+          type: 'notion-page-chunks-markdown',
+          data: {
+            pageId,
+            markdown,
+          },
+        },
+        '*',
+      );
 
       // Return the original response so the page continues working normally
       return response;

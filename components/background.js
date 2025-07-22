@@ -1,5 +1,6 @@
 import './common/actionButtonBehavior.js';
 import './common/ytSubtitleIntercept.js';
+import './common/notionContentIntercept.js';
 import {
   showLoadingBadge,
   clearLoadingBadge,
