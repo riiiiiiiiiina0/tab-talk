@@ -1,0 +1,60 @@
+import { getIconStyle } from './iconStyle.js';
+
+/**
+ * Update the extension action icon based on theme and selected icon style.
+ */
+export async function updateActionIcon() {
+  const style = await getIconStyle();
+  const iconName = style === 'simple' ? 'simple' : 'rainbow';
+  const iconDict = {
+    16: `/icons/${iconName}/icon-16x16.png`,
+    32: `/icons/${iconName}/icon-32x32.png`,
+    48: `/icons/${iconName}/icon-48x48.png`,
+    128: `/icons/${iconName}/icon-128x128.png`,
+  };
+
+  chrome.action.setIcon({ path: iconDict });
+  chrome.tabs.query({}, (tabs) => {
+    for (const tab of tabs) {
+      if (tab && tab.id !== undefined) {
+        chrome.action.setIcon({ path: iconDict, tabId: tab.id });
+      }
+    }
+  });
+}
+
+/**
+ * Show a loading badge on the action button.
+ * @param {number} [tabId] - The tab ID to show the badge on.
+ */
+export async function showLoadingBadge(tabId) {
+  setActionButtonBadge('Loading', tabId);
+}
+
+/**
+ * Set the action button badge text and background color.
+ * @param {string} text - The text to display on the badge.
+ * @param {number} [tabId] - The tab ID to set the badge on.
+ */
+export function setActionButtonBadge(text, tabId) {
+  // On Vivaldi, the badge is not updated on current tab on the action button, unless we set it on the current tab.
+  if (tabId) {
+    chrome.action.setBadgeText({ text, tabId }).catch(() => {});
+    chrome.action
+      .setBadgeBackgroundColor({ color: '#4CAF50', tabId })
+      .catch(() => {});
+  }
+  chrome.action.setBadgeText({ text }).catch(() => {});
+  chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' }).catch(() => {});
+}
+
+/**
+ * Clear the loading badge on the action button.
+ * @param {number} [tabId] - The tab ID to clear the badge on.
+ */
+export async function clearLoadingBadge(tabId) {
+  if (tabId) {
+    await chrome.action.setBadgeText({ text: '', tabId }).catch(() => {});
+  }
+  await chrome.action.setBadgeText({ text: '' }).catch(() => {});
+}
