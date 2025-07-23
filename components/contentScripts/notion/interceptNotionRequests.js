@@ -7,6 +7,7 @@ script.type = 'text/javascript';
 
 // Inject the script into the page
 (document.head || document.documentElement).appendChild(script);
+console.log('[interceptNotionRequests] script injected');
 
 // Remove the script tag after it loads (optional cleanup)
 script.onload = () => {
@@ -26,6 +27,10 @@ window.addEventListener('message', (event) => {
     message.source === 'tabtalk-extension' &&
     message.type === 'notion-page-chunks-markdown'
   ) {
+    console.log(
+      '[interceptNotionRequests] sending message to background',
+      message,
+    );
     chrome.runtime.sendMessage({
       type: message.type,
       data: message.data,

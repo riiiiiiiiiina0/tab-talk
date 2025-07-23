@@ -52,7 +52,7 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "components/contentScripts/interceptNotionRequestsScript.js"
+        "components/contentScripts/notion/interceptNotionRequestsScript.js"
       ],
       "matches": [
         "https://www.notion.so/*"

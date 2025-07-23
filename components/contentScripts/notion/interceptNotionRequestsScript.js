@@ -136,11 +136,7 @@ window.fetch = async function (...args) {
 
       // Read the response body as JSON
       const responseData = await clonedResponse.json();
-      console.log(
-        '[Notion API request interceptor]',
-        'responseData',
-        responseData,
-      );
+      console.log('[interceptNotionRequestsScript] responseData', responseData);
 
       blocks = { ...blocks, ...responseData.recordMap.block };
 
@@ -153,7 +149,7 @@ window.fetch = async function (...args) {
 
       // Log or process the intercepted data
       console.log(
-        '[Notion API request interceptor]',
+        '[interceptNotionRequestsScript]',
         'Intercepted Notion loadCachedPageChunks response as markdown:',
         pageId,
         markdown,
@@ -192,4 +188,4 @@ window.fetch = async function (...args) {
 };
 
 // Log that the interceptor is active
-console.log('[Notion API request interceptor] initialized');
+console.log('[interceptNotionRequestsScript] initialized');

@@ -29,6 +29,7 @@ export function deleteNotionPageMarkdown(pageId) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === 'notion-page-chunks-markdown' && message.data) {
+    console.log('[background] notion manager onMessage', message);
     const { pageId, markdown } = message.data;
     if (pageId) {
       setNotionPageMarkdown(pageId, markdown);

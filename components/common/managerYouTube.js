@@ -24,18 +24,27 @@ const YT_SUBTITLE_CACHE = new Map();
  * @returns {string}
  */
 function parseCaptionText(json) {
-  return json.events
-    .map((event) => {
-      // convert tStartMs to HH:mm:ss format
-      const startTime = new Date(event.tStartMs).toISOString().substr(11, 8);
-      return `${startTime}: ${
-        event.segs
-          ?.map((seg) => seg.utf8)
-          .join(' ')
-          .replaceAll('\n', ' ') || ''
-      }`;
-    })
-    .join('\n');
+  let lastStartTime = '';
+  const lines = [];
+
+  json.events.forEach((event) => {
+    const startTime = new Date(event.tStartMs).toISOString().substr(11, 8);
+    const content =
+      event.segs
+        ?.map((seg) => seg.utf8)
+        .join(' ')
+        .replaceAll('\n', ' ') || '';
+
+    if (startTime === lastStartTime) {
+      lines[lines.length - 1] += ` ${content}`;
+    } else {
+      lines.push(`${startTime}: ${content}`);
+    }
+
+    lastStartTime = startTime;
+  });
+
+  return lines.join('\n');
 }
 
 /**
