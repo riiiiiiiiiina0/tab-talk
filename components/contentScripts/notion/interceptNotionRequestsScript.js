@@ -21,6 +21,13 @@ let blocks = {};
 function notionRecordMapToMarkdown(blocks) {
   if (!blocks) return '';
 
+  const id = location.pathname.split('/').pop()?.split('-').pop() || '';
+  const pageId = id.replace(
+    /^(\w{8})(\w{4})(\w{4})(\w{4})(\w{12})$/,
+    '$1-$2-$3-$4-$5',
+  );
+  console.log('[interceptNotionRequestsScript] pageId', pageId);
+
   // Helper to safely get the underlying block value
   const getBlock = (id) => {
     const wrapper = blocks[id];
@@ -40,15 +47,17 @@ function notionRecordMapToMarkdown(blocks) {
     const b = getBlock(id);
     if (!b) return false;
     if (b.type !== 'page') return false;
-    // If parent block exists inside the same recordMap, it's not root
-    if (b.parent_id && blocks[b.parent_id]) return false;
-    return true;
+    // // If parent block exists inside the same recordMap, it's not root
+    // if (b.parent_id && blocks[b.parent_id]) return false;
+    // return true;
+    if (b.id === pageId) return true;
+    return false;
   });
 
-  if (rootBlockIds.length === 0) {
-    // Fallback: just pick the first block and render everything reachable
-    rootBlockIds.push(Object.keys(blocks)[0]);
-  }
+  // if (rootBlockIds.length === 0) {
+  //   // Fallback: just pick the first block and render everything reachable
+  //   rootBlockIds.push(Object.keys(blocks)[0]);
+  // }
 
   const visited = new Set();
 
