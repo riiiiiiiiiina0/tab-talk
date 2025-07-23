@@ -2,7 +2,10 @@
 const originalFetch = window.fetch;
 
 // The target Notion API endpoint we want to intercept
-const NOTION_CHUNKS_ENDPOINT = '/api/v3/loadCachedPageChunks';
+const NOTION_CHUNKS_ENDPOINT = [
+  '/api/v3/loadCachedPageChunks',
+  '/api/v3/loadCachedPageChunkV2',
+];
 
 let blocks = {};
 
@@ -126,7 +129,10 @@ window.fetch = async function (...args) {
   const [resource, config] = args;
 
   // Check if this is a request to the Notion API endpoint we're interested in
-  if (resource === NOTION_CHUNKS_ENDPOINT) {
+  if (
+    typeof resource === 'string' &&
+    NOTION_CHUNKS_ENDPOINT.includes(resource)
+  ) {
     try {
       // Make the original request
       const response = await originalFetch(...args);
