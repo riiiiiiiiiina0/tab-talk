@@ -1,6 +1,5 @@
 import './common/actionButtonBehavior.js';
 import './common/managerYouTube.js';
-import './common/managerNotion.js';
 import {
   showLoadingBadge,
   clearLoadingBadge,

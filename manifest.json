@@ -38,25 +38,6 @@
         "components/contentScripts/youtube/triggerLoadingCaptions.js"
       ],
       "run_at": "document_end"
-    },
-    {
-      "matches": [
-        "https://www.notion.so/*"
-      ],
-      "js": [
-        "components/contentScripts/notion/interceptNotionRequests.js"
-      ],
-      "run_at": "document_start"
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "components/contentScripts/notion/interceptNotionRequestsScript.js"
-      ],
-      "matches": [
-        "https://www.notion.so/*"
-      ]
     }
   ]
 }
