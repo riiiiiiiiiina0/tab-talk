@@ -1,12 +1,12 @@
 import './common/actionButtonBehavior.js';
-import './common/ytSubtitleIntercept.js';
-import './common/notionContentIntercept.js';
+import './common/managerYouTube.js';
+import './common/managerNotion.js';
 import {
   showLoadingBadge,
   clearLoadingBadge,
   updateActionIcon,
 } from './common/actionButton.js';
-import { LLM_PROVIDER_META, getLLMProvider } from './common/llmProviders.js';
+import { LLM_PROVIDER_META, getLLMProvider } from './utils/llmProviders.js';
 import {
   collectPageContent,
   injectScriptToPasteFilesAsAttachments,

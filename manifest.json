@@ -35,7 +35,7 @@
         "https://www.youtube.com/watch*"
       ],
       "js": [
-        "components/contentScripts/interceptYoutubeSubtitles.js"
+        "components/contentScripts/youtube/triggerLoadingCaptions.js"
       ],
       "run_at": "document_end"
     },
@@ -44,7 +44,7 @@
         "https://www.notion.so/*"
       ],
       "js": [
-        "components/contentScripts/interceptNotionRequests.js"
+        "components/contentScripts/notion/interceptNotionRequests.js"
       ],
       "run_at": "document_start"
     }
@@ -52,7 +52,7 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "components/contentScripts/notionFetchInterceptor.js"
+        "components/contentScripts/interceptNotionRequestsScript.js"
       ],
       "matches": [
         "https://www.notion.so/*"

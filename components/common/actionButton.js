@@ -1,4 +1,4 @@
-import { getIconStyle } from './iconStyle.js';
+import { getIconStyle } from '../utils/iconStyle.js';
 
 /**
  * Update the extension action icon based on theme and selected icon style.

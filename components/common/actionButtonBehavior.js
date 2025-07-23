@@ -1,4 +1,4 @@
-import { LLM_PROVIDER_META } from './llmProviders.js';
+import { LLM_PROVIDER_META } from '../utils/llmProviders.js';
 
 /**
  * Helper: Check if a URL matches any supported LLM provider

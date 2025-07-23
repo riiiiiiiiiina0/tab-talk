@@ -19,6 +19,26 @@
 const YT_SUBTITLE_CACHE = new Map();
 
 /**
+ * Parse the caption text from the given JSON response body.
+ * @param {YtSubtitleResponseBody} json
+ * @returns {string}
+ */
+function parseCaptionText(json) {
+  return json.events
+    .map((event) => {
+      // convert tStartMs to HH:mm:ss format
+      const startTime = new Date(event.tStartMs).toISOString().substr(11, 8);
+      return `${startTime}: ${
+        event.segs
+          ?.map((seg) => seg.utf8)
+          .join(' ')
+          .replaceAll('\n', ' ') || ''
+      }`;
+    })
+    .join('\n');
+}
+
+/**
  * Common handler for both DNR debug and webRequest approaches.
  * Duplicates the request to obtain its body and caches the caption text.
  * @param {string|undefined} url
@@ -41,36 +61,8 @@ async function handleSubtitleRequest(url, tabId) {
 
     /** @type {YtSubtitleResponseBody} */
     const json = await res.json();
-
-    const captionText = json.events
-      .map((event) => {
-        // convert tStartMs to HH:mm:ss format
-        const startTime = new Date(event.tStartMs).toISOString().substr(11, 8);
-        return `${startTime}: ${
-          event.segs
-            ?.map((seg) => seg.utf8)
-            .join(' ')
-            .replaceAll('\n', ' ') || ''
-        }`;
-      })
-      .join('\n');
-
-    // Maintain an insertion-ordered cache capped at 20 entries. Updating an
-    // existing video moves it to the most-recent position.
-    if (YT_SUBTITLE_CACHE.has(videoId)) {
-      YT_SUBTITLE_CACHE.delete(videoId);
-    }
-    YT_SUBTITLE_CACHE.set(videoId, captionText);
-    if (YT_SUBTITLE_CACHE.size > 50) {
-      // The first key in the Map is the oldest entry.
-      const oldestKey = YT_SUBTITLE_CACHE.keys().next().value;
-      YT_SUBTITLE_CACHE.delete(oldestKey);
-    }
-    console.log(
-      '[background] YouTube subtitle cached',
-      videoId,
-      YT_SUBTITLE_CACHE.keys(),
-    );
+    const captionText = parseCaptionText(json);
+    setCachedCaption(videoId, captionText);
   } catch (err) {
     console.error('[background] Error handling subtitle request', err);
   }
@@ -83,6 +75,30 @@ async function handleSubtitleRequest(url, tabId) {
  */
 export function getCachedCaption(videoId) {
   return YT_SUBTITLE_CACHE.get(videoId) || null;
+}
+
+/**
+ * Set the cached caption for the given video id.
+ * @param {string} videoId
+ * @param {string} caption
+ */
+export function setCachedCaption(videoId, caption) {
+  // Maintain an insertion-ordered cache capped at 20 entries. Updating an
+  // existing video moves it to the most-recent position.
+  if (YT_SUBTITLE_CACHE.has(videoId)) {
+    YT_SUBTITLE_CACHE.delete(videoId);
+  }
+  YT_SUBTITLE_CACHE.set(videoId, caption);
+  if (YT_SUBTITLE_CACHE.size > 50) {
+    // The first key in the Map is the oldest entry.
+    const oldestKey = YT_SUBTITLE_CACHE.keys().next().value;
+    YT_SUBTITLE_CACHE.delete(oldestKey);
+  }
+  console.log(
+    '[background] youtube caption cached',
+    videoId,
+    YT_SUBTITLE_CACHE.keys(),
+  );
 }
 
 // Always use the WebRequest API (MV3-compatible) to observe YouTube subtitle
@@ -98,7 +114,7 @@ try {
     },
   );
   console.log(
-    '[background] YouTube subtitle interceptor registered via webRequest',
+    '[background] youtube caption interceptor registered via webRequest',
   );
 } catch (err) {
   console.error('[background] Failed to register webRequest listener', err);
@@ -108,7 +124,7 @@ try {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || message.type !== 'get-youtube-caption') return;
 
-  console.log('[background] onMessage', message);
+  console.log('[background] youtube manager onMessage', message);
   const { videoId } = message;
   if (typeof videoId !== 'string' || !videoId) {
     sendResponse({ caption: null });

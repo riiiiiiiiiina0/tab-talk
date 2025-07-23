@@ -1,7 +1,7 @@
 // Create a script element to inject into the main page context
 const script = document.createElement('script');
 script.src = chrome.runtime.getURL(
-  'components/contentScripts/notionFetchInterceptor.js',
+  'components/contentScripts/notion/interceptNotionRequestsScript.js',
 );
 script.type = 'text/javascript';
 
