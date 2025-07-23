@@ -37,4 +37,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
+// Provide cached Notion page markdown to content scripts on demand
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message || message.type !== 'get-notion-page-markdown') return;
+
+  console.log('[background] notion manager onMessage', message);
+  const { pageId } = message;
+  if (typeof pageId !== 'string' || !pageId) {
+    sendResponse({ pageId, markdown: null });
+    return;
+  }
+
+  const markdown = NOTION_PAGE_MARKDOWN_CACHE.get(pageId) || null;
+  sendResponse({ pageId, markdown });
+});
+
 console.log('[background] notion manager initialized');
