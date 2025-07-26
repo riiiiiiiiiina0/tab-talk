@@ -48,26 +48,21 @@
    */
   async function clickSubtitlesButton() {
     try {
-      console.log('[interceptYoutubeSubtitles] waiting for subtitles button');
+      console.log('[triggerLoadingCaptions] waiting for subtitles button');
       const btn = /** @type {HTMLElement} */ (
-        await waitForElement('.ytp-subtitles-button', 5_000)
+        await waitForElement(
+          '.ytp-subtitles-button[title]:not([title*="unavailable"])',
+          5_000,
+        )
       );
-      console.log('[interceptYoutubeSubtitles] subtitles button found', btn);
-
-      if (btn.title.includes('unavailable')) {
-        console.log('[interceptYoutubeSubtitles] subtitles unavailable');
-        return;
-      }
+      console.log('[triggerLoadingCaptions] subtitles button found', btn);
 
       // Wait a bit to ensure controls are ready
       await sleep(300);
       btn.click();
-      console.log('[interceptYoutubeSubtitles] subtitles button clicked');
+      console.log('[triggerLoadingCaptions] subtitles button clicked');
     } catch (err) {
-      console.warn(
-        '[interceptYoutubeSubtitles] subtitles button not found',
-        err,
-      );
+      console.warn('[triggerLoadingCaptions] subtitles button not found', err);
     }
   }
 
@@ -81,7 +76,7 @@
       return;
     }
 
-    console.log('[interceptYoutubeSubtitles] clicking subtitles button');
+    console.log('[triggerLoadingCaptions] clicking subtitles button');
     clickSubtitlesButton();
   }
 

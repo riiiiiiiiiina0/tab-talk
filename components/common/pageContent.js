@@ -1,5 +1,5 @@
-import { waitForTabLoad, waitForTabReady } from './tab.js';
-import { getCachedCaption } from './ytSubtitleIntercept.js';
+import { waitForTabReady } from '../utils/tab.js';
+import { getCachedCaption } from './managerYouTube.js';
 
 /**
  * Collected tab info
@@ -49,7 +49,7 @@ export function injectScriptToGetPageContent(tabId) {
         'libs/readability.min.js',
         'libs/turndown.7.2.0.js',
         'libs/turndown-plugin-gfm.1.0.2.js',
-        'components/contentScripts/getPageContentAsMarkdown.js',
+        'components/contentScripts/general/getPageContentAsMarkdown.js',
       ];
       if (chrome.runtime.lastError || !tab) {
         // Fallback – just inject the scripts
@@ -92,7 +92,7 @@ export function injectScriptToGetPageContent(tabId) {
  */
 export function injectScriptToPasteFilesAsAttachments(tabId) {
   return injectContentScripts(tabId, [
-    'components/contentScripts/pasteFilesAsAttachments.js',
+    'components/contentScripts/llm/pasteFilesAsAttachments.js',
   ]);
 }
 

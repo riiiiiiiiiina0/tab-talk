@@ -4,14 +4,14 @@ import {
   getLLMProvider,
   setLLMProvider,
   LLM_PROVIDER_META,
-} from './common/llmProviders.js';
+} from './utils/llmProviders.js';
 import {
   SUPPORTED_ICON_STYLES,
   ICON_STYLE_DEFAULT,
   getIconStyle,
   setIconStyle,
   ICON_STYLE_META,
-} from './common/iconStyle.js';
+} from './utils/iconStyle.js';
 
 // Save button in the new UI (first primary button)
 const saveButton = /** @type {HTMLButtonElement|null} */ (
