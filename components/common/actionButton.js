@@ -23,11 +23,43 @@ export async function updateActionIcon() {
   });
 }
 
+const loadingBadgeSequence = [
+  '🕛',
+  '🕐',
+  '🕑',
+  '🕒',
+  '🕓',
+  '🕔',
+  '🕕',
+  '🕖',
+  '🕗',
+  '🕘',
+  '🕙',
+  '🕚',
+];
+let loadingBadgeIndex = 0;
+let loadingBadgeInterval = 0;
+
+function startLoadingBadgeAnimation() {
+  clearInterval(loadingBadgeInterval);
+  loadingBadgeIndex = 0;
+
+  loadingBadgeInterval = setInterval(() => {
+    loadingBadgeIndex = (loadingBadgeIndex + 1) % loadingBadgeSequence.length;
+    setActionButtonBadge(loadingBadgeSequence[loadingBadgeIndex]);
+  }, 100);
+}
+
+function stopLoadingBadgeAnimation() {
+  clearInterval(loadingBadgeInterval);
+  loadingBadgeIndex = 0;
+}
+
 /**
  * Show a loading badge on the action button.
  */
 export async function showLoadingBadge() {
-  setActionButtonBadge('Loading');
+  startLoadingBadgeAnimation();
 }
 
 /**
@@ -36,15 +68,10 @@ export async function showLoadingBadge() {
  */
 export function setActionButtonBadge(text) {
   chrome.action.setBadgeText({ text }).catch(() => {});
-  chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' }).catch(() => {});
-
   chrome.tabs.query({}, (tabs) => {
     for (const tab of tabs) {
       if (tab && tab.id !== undefined) {
         chrome.action.setBadgeText({ text, tabId: tab.id }).catch(() => {});
-        chrome.action
-          .setBadgeBackgroundColor({ color: '#4CAF50', tabId: tab.id })
-          .catch(() => {});
       }
     }
   });
@@ -54,6 +81,7 @@ export function setActionButtonBadge(text) {
  * Clear the loading badge on the action button.
  */
 export async function clearLoadingBadge() {
+  stopLoadingBadgeAnimation();
   await chrome.action.setBadgeText({ text: '' }).catch(() => {});
 
   chrome.tabs.query({}, (tabs) => {
