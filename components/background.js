@@ -20,6 +20,11 @@ let isProcessing = false;
 // can clear the loading badge if the tab is closed before the paste completes.
 let llmTabId = null;
 
+// Double-click detection variables
+let clickTimeout = null;
+let clickCount = 0;
+const DOUBLE_CLICK_DELAY = 500; // milliseconds
+
 /**
  * Collect page content from the given tabs one by one.
  * @param {(number|undefined)[]} tabsToProcess
@@ -54,16 +59,73 @@ async function collectPageContentOneByOne(tabsToProcess) {
 }
 
 /**
- * Handle the action button click.
- * This will be called when user click the action button when NOT in LLM provider page.
+ * Download collected content as markdown files.
+ * @param {(import('./common/pageContent.js').CollectedTabInfo | null)[]} contents
+ */
+async function downloadContentsAsMarkdown(contents) {
+  try {
+    const validContents = contents.filter((content) => content !== null);
+
+    if (validContents.length === 0) {
+      console.log('[background] no valid content to download');
+      return;
+    }
+
+    for (let i = 0; i < validContents.length; i++) {
+      const content = validContents[i];
+
+      // Generate a safe filename
+      const safeTitle =
+        content.title
+          .replace(/[<>:"/\\|?*]/g, '-') // Replace invalid filename characters with '-'
+          .substring(0, 100) // Limit length
+          .trim() || 'page';
+
+      const now = new Date();
+      const pad = (n) => n.toString().padStart(2, '0');
+      const timestamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(
+        now.getDate(),
+      )}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+      const filename =
+        validContents.length > 1
+          ? `${safeTitle}_${i + 1}_${timestamp}.md`
+          : `${safeTitle}_${timestamp}.md`;
+
+      // Format the content as markdown
+      const markdownContent = `# ${content.title}\n\n**URL:** ${
+        content.url
+      }\n\n**Extracted:** ${new Date().toISOString()}\n\n---\n\n${
+        content.content
+      }`;
+
+      // Create data URL for download (service workers don't support URL.createObjectURL)
+      const dataUrl =
+        'data:text/markdown;charset=utf-8,' +
+        encodeURIComponent(markdownContent);
+
+      await chrome.downloads.download({
+        url: dataUrl,
+        filename: filename,
+        saveAs: false,
+      });
+    }
+
+    console.log(
+      `[background] downloaded ${validContents.length} markdown file(s)`,
+    );
+  } catch (err) {
+    console.error('[background] download error:', err);
+  } finally {
+    await clearLoadingBadge();
+    isProcessing = false;
+  }
+}
+
+/**
+ * Handle single click action - original behavior
  * @param {chrome.tabs.Tab} activeTab
  */
-chrome.action.onClicked.addListener(async (activeTab) => {
-  // Ignore the click if we are already processing a previous request
-  if (isProcessing) {
-    console.log('[background] still processing, click ignored');
-    return;
-  }
+async function handleSingleClick(activeTab) {
   try {
     const highlighted = await chrome.tabs.query({
       currentWindow: true,
@@ -98,7 +160,67 @@ chrome.action.onClicked.addListener(async (activeTab) => {
       injectScriptToPasteFilesAsAttachments(tab.id);
     }
   } catch (err) {
-    console.error('[background] action.onClicked error:', err);
+    console.error('[background] single click error:', err);
+  }
+}
+
+/**
+ * Handle double click action - download as markdown
+ * @param {chrome.tabs.Tab} activeTab
+ */
+async function handleDoubleClick(activeTab) {
+  try {
+    const highlighted = await chrome.tabs.query({
+      currentWindow: true,
+      highlighted: true,
+    });
+
+    let tabsToProcess = highlighted.length > 1 ? highlighted : [activeTab];
+    tabsToProcess = tabsToProcess.filter((tab) =>
+      (tab.url || '').startsWith('http'),
+    );
+
+    if (tabsToProcess.length === 0) {
+      console.log('[background] no tabs to process for download');
+      return;
+    }
+
+    const tabIds = tabsToProcess.map((tab) => tab.id);
+
+    const contents = await collectPageContentOneByOne(tabIds);
+    await downloadContentsAsMarkdown(contents);
+  } catch (err) {
+    console.error('[background] double click error:', err);
+  }
+}
+
+/**
+ * Handle the action button click with double-click detection.
+ * @param {chrome.tabs.Tab} activeTab
+ */
+chrome.action.onClicked.addListener(async (activeTab) => {
+  // Ignore the click if we are already processing a previous request
+  if (isProcessing) {
+    console.log('[background] still processing, click ignored');
+    return;
+  }
+
+  clickCount++;
+
+  if (clickCount === 1) {
+    // First click - wait to see if there's a second click
+    clickTimeout = setTimeout(() => {
+      // Single click
+      console.log('[background] single click detected');
+      handleSingleClick(activeTab);
+      clickCount = 0;
+    }, DOUBLE_CLICK_DELAY);
+  } else if (clickCount === 2) {
+    // Second click - it's a double click
+    clearTimeout(clickTimeout);
+    console.log('[background] double click detected');
+    handleDoubleClick(activeTab);
+    clickCount = 0;
   }
 });
 
