@@ -58,7 +58,51 @@ async function collectPageContentOneByOne(tabsToProcess) {
  * This will be called when user click the action button when NOT in LLM provider page.
  * @param {chrome.tabs.Tab} activeTab
  */
+let lastClickTime = 0;
+
+async function downloadTabsAsMarkdown(tabs) {
+  const tabIds = tabs.map((tab) => tab.id);
+  const contents = await collectPageContentOneByOne(tabIds);
+
+  for (const content of contents) {
+    if (content) {
+      const blob = new Blob([content.content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      chrome.downloads.download({
+        url: url,
+        filename: `${content.title}.md`,
+        saveAs: true,
+      });
+    }
+  }
+}
+
 chrome.action.onClicked.addListener(async (activeTab) => {
+  const now = new Date().getTime();
+  const timeSinceLastClick = now - lastClickTime;
+  lastClickTime = now;
+
+  if (timeSinceLastClick < 500) {
+    // Double-click
+    try {
+      const highlighted = await chrome.tabs.query({
+        currentWindow: true,
+        highlighted: true,
+      });
+      const tabsToProcess = highlighted.length > 1 ? highlighted : [activeTab];
+      const httpTabs = tabsToProcess.filter((tab) =>
+        (tab.url || '').startsWith('http'),
+      );
+      if (httpTabs.length > 0) {
+        await downloadTabsAsMarkdown(httpTabs);
+      }
+    } catch (err) {
+      console.error('[background] on double-click error:', err);
+    }
+    return;
+  }
+
+  // Single-click
   // Ignore the click if we are already processing a previous request
   if (isProcessing) {
     console.log('[background] still processing, click ignored');
