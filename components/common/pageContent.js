@@ -45,39 +45,43 @@ export function injectScriptToGetPageContent(tabId) {
    */
   return new Promise((resolve) => {
     chrome.tabs.get(tabId, (tab) => {
-      const scripts = [
-        'libs/readability.min.js',
-        'libs/turndown.7.2.0.js',
-        'libs/turndown-plugin-gfm.1.0.2.js',
-        'components/contentScripts/general/getPageContentAsMarkdown.js',
-      ];
       if (chrome.runtime.lastError || !tab) {
-        // Fallback – just inject the scripts
-        injectContentScripts(tabId, scripts).then(resolve);
+        // Fallback – just inject the general content script
+        const generalScripts = [
+          'libs/readability.min.js',
+          'libs/turndown.7.2.0.js',
+          'libs/turndown-plugin-gfm.1.0.2.js',
+          'components/contentScripts/general/getPageContent.js',
+        ];
+        injectContentScripts(tabId, generalScripts).then(resolve);
         return;
+      }
+
+      const tabUrl = tab.url || '';
+      let scripts = [];
+      let activateTabFirst = false;
+
+      if (/^https?:\/\/(?:www\.)?youtube\.com\/watch/.test(tabUrl)) {
+        scripts = ['components/contentScripts/youtube/getPageContentAsMarkdown.js'];
+        const videoId = new URL(tabUrl).searchParams.get('v');
+        if (videoId && !getCachedCaption(videoId)) {
+          activateTabFirst = true;
+        }
+      } else if (/^https?:\/\/(?:www\.)?notion\.so/.test(tabUrl)) {
+        scripts = ['components/contentScripts/notion/getPageContentAsMarkdown.js'];
+      } else {
+        scripts = [
+          'libs/readability.min.js',
+          'libs/turndown.7.2.0.js',
+          'libs/turndown-plugin-gfm.1.0.2.js',
+          'components/contentScripts/general/getPageContent.js',
+        ];
       }
 
       const doInject = () => injectContentScripts(tabId, scripts).then(resolve);
 
-      const isYouTubeWatch = /^https?:\/\/(?:www\.)?youtube\.com\/watch/.test(
-        tab.url || '',
-      );
-      const videoId = new URL(tab.url || '').searchParams.get('v');
-
-      if (isYouTubeWatch && videoId) {
-        // Try to determine whether captions for this video are already cached
-        // in the background service worker. If they are, we can skip the
-        // expensive "activate tab first" step and inject the extraction
-        // scripts directly.
-
-        // Ask the background script whether captions are cached.
-        const caption = getCachedCaption(videoId);
-
-        if (caption) {
-          doInject();
-        } else {
-          chrome.tabs.update(tabId, { active: true }, () => doInject());
-        }
+      if (activateTabFirst) {
+        chrome.tabs.update(tabId, { active: true }, () => doInject());
       } else {
         doInject();
       }
