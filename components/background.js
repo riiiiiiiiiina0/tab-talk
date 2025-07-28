@@ -5,7 +5,11 @@ import {
   clearLoadingBadge,
   updateActionIcon,
 } from './common/actionButton.js';
-import { LLM_PROVIDER_META, getLLMProvider } from './utils/llmProviders.js';
+import {
+  LLM_PROVIDER_META,
+  LLM_PROVIDER_CHATGPT,
+  getLLMProvider,
+} from './utils/llmProviders.js';
 import {
   collectPageContent,
   injectScriptToPasteFilesAsAttachments,
@@ -153,7 +157,11 @@ async function handleSingleClick(activeTab) {
       console.error('[background] llm provider not supported:', llmProvider);
       return;
     }
-    const url = meta.url;
+    let url = meta.url;
+    // Add hint=search parameter for ChatGPT
+    if (llmProvider === LLM_PROVIDER_CHATGPT) {
+      url += '?hints=search';
+    }
     const tab = await chrome.tabs.create({ url, active: true });
     if (tab.id) {
       llmTabId = tab.id; // record the tab so we know which one to watch
