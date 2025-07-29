@@ -51,7 +51,7 @@ export function injectScriptToGetPageContent(tabId) {
           'libs/readability.min.js',
           'libs/turndown.7.2.0.js',
           'libs/turndown-plugin-gfm.1.0.2.js',
-          'components/contentScripts/general/getPageContent.js',
+          'components/contentScripts/general/getContent.js',
         ];
         injectContentScripts(tabId, generalScripts).then(resolve);
         return;
@@ -62,19 +62,19 @@ export function injectScriptToGetPageContent(tabId) {
       let activateTabFirst = false;
 
       if (/^https?:\/\/(?:www\.)?youtube\.com\/watch/.test(tabUrl)) {
-        scripts = ['components/contentScripts/youtube/getPageContentAsMarkdown.js'];
+        scripts = ['components/contentScripts/youtube/getContent.js'];
         const videoId = new URL(tabUrl).searchParams.get('v');
         if (videoId && !getCachedCaption(videoId)) {
           activateTabFirst = true;
         }
       } else if (/^https?:\/\/(?:www\.)?notion\.so/.test(tabUrl)) {
-        scripts = ['components/contentScripts/notion/getPageContentAsMarkdown.js'];
+        scripts = ['components/contentScripts/notion/getContent.js'];
       } else {
         scripts = [
           'libs/readability.min.js',
           'libs/turndown.7.2.0.js',
           'libs/turndown-plugin-gfm.1.0.2.js',
-          'components/contentScripts/general/getPageContent.js',
+          'components/contentScripts/general/getContent.js',
         ];
       }
 
