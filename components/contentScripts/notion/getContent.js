@@ -478,27 +478,6 @@
     }
   }
 
-  async function getPageContent() {
-    const content = await getNotionPageContent();
-
-    // Wrap the collected data in XML and include any user-selected text
-    const sel = window.getSelection ? window.getSelection() : null;
-    const selectedText = sel ? sel.toString().trim() : '';
-
-    let formattedContent = [];
-    if (selectedText) {
-      formattedContent.push(`<selectedText>\n${selectedText}\n</selectedText>`);
-    }
-    formattedContent.push(`<content>\n${content || 'no content'}\n</content>`);
-
-    // Send the content back to the background script
-    chrome.runtime.sendMessage({
-      type: 'page-content-collected',
-      title: document.title,
-      url: document.location.href,
-      content: formattedContent.join('\n\n'),
-    });
-  }
-
-  getPageContent();
+  // Register content getter function for the shared collector
+  window['getContent'] = getNotionPageContent;
 })();

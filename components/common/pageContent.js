@@ -1,6 +1,28 @@
 import { waitForTabReady } from '../utils/tab.js';
 import { getCachedCaption } from './managerYouTube.js';
 
+const sharedScripts = [
+  'components/contentScripts/shared/pageContentCollector.js',
+];
+
+const generalScripts = [
+  'libs/readability.min.js',
+  'libs/turndown.7.2.0.js',
+  'libs/turndown-plugin-gfm.1.0.2.js',
+  'components/contentScripts/general/getContent.js',
+  ...sharedScripts,
+];
+
+const youtubeScripts = [
+  'components/contentScripts/youtube/getContent.js',
+  ...sharedScripts,
+];
+
+const notionScripts = [
+  'components/contentScripts/notion/getContent.js',
+  ...sharedScripts,
+];
+
 /**
  * Collected tab info
  * @typedef {Object} CollectedTabInfo
@@ -46,13 +68,6 @@ export function injectScriptToGetPageContent(tabId) {
   return new Promise((resolve) => {
     chrome.tabs.get(tabId, (tab) => {
       if (chrome.runtime.lastError || !tab) {
-        // Fallback – just inject the general content script
-        const generalScripts = [
-          'libs/readability.min.js',
-          'libs/turndown.7.2.0.js',
-          'libs/turndown-plugin-gfm.1.0.2.js',
-          'components/contentScripts/general/getContent.js',
-        ];
         injectContentScripts(tabId, generalScripts).then(resolve);
         return;
       }
@@ -62,20 +77,15 @@ export function injectScriptToGetPageContent(tabId) {
       let activateTabFirst = false;
 
       if (/^https?:\/\/(?:www\.)?youtube\.com\/watch/.test(tabUrl)) {
-        scripts = ['components/contentScripts/youtube/getContent.js'];
+        scripts = youtubeScripts;
         const videoId = new URL(tabUrl).searchParams.get('v');
         if (videoId && !getCachedCaption(videoId)) {
           activateTabFirst = true;
         }
       } else if (/^https?:\/\/(?:www\.)?notion\.so/.test(tabUrl)) {
-        scripts = ['components/contentScripts/notion/getContent.js'];
+        scripts = notionScripts;
       } else {
-        scripts = [
-          'libs/readability.min.js',
-          'libs/turndown.7.2.0.js',
-          'libs/turndown-plugin-gfm.1.0.2.js',
-          'components/contentScripts/general/getContent.js',
-        ];
+        scripts = generalScripts;
       }
 
       const doInject = () => injectContentScripts(tabId, scripts).then(resolve);
