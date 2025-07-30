@@ -6,7 +6,6 @@ const sharedScripts = [
 ];
 
 const generalScripts = [
-  'libs/readability.min.js',
   'libs/turndown.7.2.0.js',
   'libs/turndown-plugin-gfm.1.0.2.js',
   'components/contentScripts/general/getContent.js',

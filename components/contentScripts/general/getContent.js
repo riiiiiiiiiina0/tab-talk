@@ -14,9 +14,7 @@
       )
       .forEach((el) => el.remove());
 
-    // @ts-ignore
-    const article = new Readability(clone).parse();
-    const html = article.content || '';
+    const html = clone.body.innerHTML;
 
     /**
      * TurndownService is a constructor for creating a new Turndown service instance.
