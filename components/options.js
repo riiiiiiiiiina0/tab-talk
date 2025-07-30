@@ -12,6 +12,7 @@ import {
   setIconStyle,
   ICON_STYLE_META,
 } from './utils/iconStyle.js';
+import { getLogOnly, setLogOnly } from './utils/developerOptions.js';
 
 // Save button in the new UI (first primary button)
 const saveButton = /** @type {HTMLButtonElement|null} */ (
@@ -24,6 +25,10 @@ const llmOptions = /** @type {HTMLDivElement|null} */ (
 
 const iconStyleOptions = /** @type {HTMLDivElement|null} */ (
   document.querySelector('#icon-style-options')
+);
+
+const logOnlyCheckbox = /** @type {HTMLInputElement|null} */ (
+  document.querySelector('#log-only-checkbox')
 );
 
 /**
@@ -226,6 +231,11 @@ async function init() {
   updateIconStyleOptionValue(iconStyle, true);
   updateThemeIcon(iconStyle);
 
+  // Set the default log only option
+  if (logOnlyCheckbox) {
+    logOnlyCheckbox.checked = await getLogOnly();
+  }
+
   // Save on button click
   if (saveButton) {
     saveButton.addEventListener('click', () => {
@@ -237,7 +247,13 @@ async function init() {
         document.querySelector('input[name="icon-style-option"]:checked')
       );
       const iconValue = selectedIconInput?.value || ICON_STYLE_DEFAULT;
-      Promise.all([setLLMProvider(value), setIconStyle(iconValue)])
+      const logOnlyValue = logOnlyCheckbox?.checked || false;
+
+      Promise.all([
+        setLLMProvider(value),
+        setIconStyle(iconValue),
+        setLogOnly(logOnlyValue),
+      ])
         .then(() => {
           setHeaderIconForStyle(iconValue);
           setFaviconForStyle(iconValue);

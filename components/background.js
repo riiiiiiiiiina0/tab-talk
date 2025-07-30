@@ -10,6 +10,7 @@ import {
   LLM_PROVIDER_CHATGPT,
   getLLMProvider,
 } from './utils/llmProviders.js';
+import { getLogOnly } from './utils/developerOptions.js';
 import {
   collectPageContent,
   injectScriptToPasteFilesAsAttachments,
@@ -149,6 +150,15 @@ async function handleSingleClick(activeTab) {
     const tabIds = tabsToProcess.map((tab) => tab.id);
 
     collectedContents = await collectPageContentOneByOne(tabIds);
+
+    const logOnly = await getLogOnly();
+    if (logOnly) {
+      console.log('[background] developer mode: logging content to console');
+      console.log(collectedContents);
+      await clearLoadingBadge();
+      isProcessing = false;
+      return;
+    }
 
     // open llm page & paste in page content
     const llmProvider = await getLLMProvider();
