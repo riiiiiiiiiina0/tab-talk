@@ -302,3 +302,8 @@ chrome.tabs.onRemoved.addListener((removedTabId) => {
 chrome.runtime.onInstalled.addListener(() => {
   updateActionIcon();
 });
+
+// Ensure the correct icon is applied when the browser starts
+chrome.runtime.onStartup.addListener(() => {
+  updateActionIcon();
+});
