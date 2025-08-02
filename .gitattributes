@@ -1,2 +1,7 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+README.md export-ignore
+LICENSE export-ignore
+package.json export-ignore
+package-lock.json export-ignore
+/.github export-ignore
+/docs export-ignore
+/node_modules export-ignore
