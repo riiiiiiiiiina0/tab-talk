@@ -41,6 +41,15 @@
         // A tab is considered "sleeping" if it is discarded or frozen
         const isSleeping = tab.discarded || tab.frozen;
 
+        // The placeholder for the favicon
+        const faviconPlaceholder = `<div class="size-5 rounded-full bg-base-300"></div>`;
+
+        // If favicon is available, create an <img> tag with an onerror fallback.
+        // Otherwise, use the placeholder.
+        const faviconEl = tab.favIconUrl
+          ? `<img src="${tab.favIconUrl}" class="size-5 rounded-sm" onerror="this.outerHTML = \`${faviconPlaceholder}\`" />`
+          : faviconPlaceholder;
+
         li.innerHTML = `
         <label class="flex flex-row gap-2 cursor-pointer items-center bg-base-200 hover:bg-base-300 transition-colors p-2 rounded-md ${
           isSleeping ? 'opacity-50' : ''
@@ -52,7 +61,7 @@
 
           <!-- favicon + optional sleeping indicator -->
           <div class="relative w-5 h-5 min-w-5">
-            <img src="${tab.favIconUrl}" class="size-5 rounded-sm" />
+            ${faviconEl}
             ${
               isSleeping
                 ? '<span class="absolute -top-2 -right-2 text-[8px] text-gray-500 animate-bounce select-none">💤</span>'
