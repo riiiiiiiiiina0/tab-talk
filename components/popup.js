@@ -44,10 +44,10 @@
         // The placeholder for the favicon
         const faviconPlaceholder = `<div class="size-5 rounded-full bg-base-300"></div>`;
 
-        // If favicon is available, create an <img> tag with an onerror fallback.
+        // If favicon is available, create an <img> tag.
         // Otherwise, use the placeholder.
         const faviconEl = tab.favIconUrl
-          ? `<img src="${tab.favIconUrl}" class="size-5 rounded-sm" onerror="this.outerHTML = \`${faviconPlaceholder}\`" />`
+          ? `<img src="${tab.favIconUrl}" class="size-5 rounded-sm favicon-img" data-tab-id="${tab.id}" />`
           : faviconPlaceholder;
 
         li.innerHTML = `
@@ -77,8 +77,18 @@
             <span class="text-xs text-gray-500 truncate">${tab.url || ''}</span>
         </div>
         </label>
-      `;
+              `;
         listEl.appendChild(li);
+
+        // Add error handler for favicon images to avoid CSP violations
+        if (tab.favIconUrl) {
+          const imgEl = li.querySelector('.favicon-img');
+          if (imgEl) {
+            imgEl.addEventListener('error', function () {
+              this.outerHTML = faviconPlaceholder;
+            });
+          }
+        }
       });
   });
 
