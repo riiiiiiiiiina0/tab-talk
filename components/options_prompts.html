@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TabTalk - Saved Prompts</title>
+  <link href="../libs/daisyui@5.css" rel="stylesheet" type="text/css" />
+  <script src="../libs/tailwindcss@4.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Favicon -->
+  <link id="favicon" rel="icon" type="image/png" href="../icons/rainbow/icon-32x32.png" />
+  <style>
+    /* Apply Inter font family */
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen p-4">
+
+  <!-- Main Container -->
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Header -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <img src="../icons/rainbow/icon-48x48.png" alt="TabTalk Icon" class="w-12 h-12">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Saved Prompts</h1>
+            <p class="text-gray-600 dark:text-gray-300">Manage your reusable prompt templates</p>
+          </div>
+        </div>
+        <a href="options.html" class="btn btn-outline btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Options
+        </a>
+      </div>
+    </div>
+
+    <!-- Search and Actions Bar -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6">
+      <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div class="flex-1 w-full md:max-w-md">
+          <div class="relative">
+            <input type="text" id="search-input" placeholder="Search prompts..."
+              class="input input-bordered w-full pl-10" />
+            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+        <button id="add-prompt-btn" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add New Prompt
+        </button>
+      </div>
+    </div>
+
+    <!-- Prompts List -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+      <div id="prompts-container" class="space-y-4">
+        <!-- Prompts will be dynamically added here -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="text-center py-12 hidden">
+        <svg class="mx-auto h-24 w-24 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="text-xl font-medium text-gray-700 dark:text-gray-300 mt-4">No prompts saved yet</h3>
+        <p class="text-gray-500 dark:text-gray-400 mt-2">Create your first prompt template to get started</p>
+        <button id="empty-state-add-btn" class="btn btn-primary mt-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Your First Prompt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Prompt Modal -->
+  <div id="prompt-modal" class="modal">
+    <div class="modal-box max-w-2xl">
+      <h3 id="modal-title" class="font-bold text-lg mb-4">Add New Prompt</h3>
+
+      <div class="space-y-4">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-medium">Prompt Name</span>
+          </label>
+          <input type="text" id="prompt-name" placeholder="Enter a short, descriptive name"
+            class="input input-bordered w-full" maxlength="50" />
+          <label class="label">
+            <span class="label-text-alt text-gray-500">Max 50 characters</span>
+          </label>
+        </div>
+
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-medium">Prompt Content</span>
+          </label>
+          <textarea id="prompt-content" placeholder="Enter your prompt template..."
+            class="textarea textarea-bordered h-32 resize-none" maxlength="2000"></textarea>
+          <label class="label">
+            <span class="label-text-alt text-gray-500">Max 2000 characters</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-action">
+        <button id="cancel-btn" class="btn btn-outline">Cancel</button>
+        <button id="save-prompt-btn" class="btn btn-primary">Save Prompt</button>
+      </div>
+    </div>
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-4">Delete Prompt</h3>
+      <p class="text-gray-600 dark:text-gray-300">Are you sure you want to delete "<span id="delete-prompt-name"
+          class="font-medium"></span>"? This action cannot be undone.</p>
+
+      <div class="modal-action">
+        <button id="cancel-delete-btn" class="btn btn-outline">Cancel</button>
+        <button id="confirm-delete-btn" class="btn btn-error">Delete</button>
+      </div>
+    </div>
+    <div class="modal-backdrop" id="delete-modal-backdrop"></div>
+  </div>
+
+  <script src="options_prompts.js" type="module"></script>
+</body>
+
+</html>
