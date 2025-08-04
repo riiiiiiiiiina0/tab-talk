@@ -6,6 +6,9 @@ import {
   SUPPORTED_LLM_PROVIDERS,
 } from './utils/llmProviders.js';
 
+// Storage key for saved prompts (same as in options_prompts.js)
+const PROMPTS_STORAGE_KEY = 'savedPrompts';
+
 /**
  * Check if a URL matches any supported LLM provider
  * @param {string} url
@@ -24,6 +27,9 @@ function isLLMPage(url) {
 // Track the currently selected LLM provider
 let selectedLLMProvider = null;
 
+// Track the currently selected prompt content
+let selectedPromptContent = null;
+
 /**
  * Create LLM selection UI
  */
@@ -38,7 +44,7 @@ async function createLLMSelection() {
   SUPPORTED_LLM_PROVIDERS.forEach((provider) => {
     const meta = LLM_PROVIDER_META[provider];
     const button = document.createElement('button');
-    button.className = `btn btn-sm w-8 h-8 p-1 border-gray-300 ${
+    button.className = `btn btn-sm w-7 h-7 p-1 border-gray-300 ${
       provider === defaultProvider ? 'btn-info border-none' : ''
     }`;
     button.dataset.provider = provider;
@@ -66,6 +72,59 @@ async function createLLMSelection() {
 
     llmSelectionEl.appendChild(button);
   });
+}
+
+/**
+ * Get all saved prompts from Chrome sync storage
+ * @returns {Promise<Array>}
+ */
+async function getPrompts() {
+  try {
+    const result = await chrome.storage.sync.get([PROMPTS_STORAGE_KEY]);
+    return result[PROMPTS_STORAGE_KEY] || [];
+  } catch (error) {
+    console.error('Error getting prompts:', error);
+    return [];
+  }
+}
+
+/**
+ * Load and populate the prompts dropdown
+ */
+async function loadPromptsDropdown() {
+  const promptsSelect = document.getElementById('prompts-selection');
+  if (!promptsSelect) return;
+
+  try {
+    const prompts = await getPrompts();
+
+    // Clear existing options except the default one
+    promptsSelect.innerHTML = '<option value="">No prompt selected</option>';
+
+    // Add prompts to the dropdown
+    prompts
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((prompt) => {
+        const option = document.createElement('option');
+        option.value = prompt.id;
+        option.textContent = prompt.name;
+        option.dataset.content = prompt.content;
+        promptsSelect.appendChild(option);
+      });
+
+    // Add event listener for prompt selection
+    promptsSelect.addEventListener('change', (e) => {
+      const target = /** @type {HTMLSelectElement} */ (e.target);
+      const selectedOption = target?.selectedOptions[0];
+      if (selectedOption && selectedOption.dataset.content) {
+        selectedPromptContent = selectedOption.dataset.content;
+      } else {
+        selectedPromptContent = null;
+      }
+    });
+  } catch (error) {
+    console.error('Error loading prompts dropdown:', error);
+  }
 }
 
 // Automatically set DaisyUI theme based on system preference
@@ -104,6 +163,9 @@ async function createLLMSelection() {
 
   // Initialize LLM selection
   createLLMSelection();
+
+  // Initialize prompts dropdown
+  loadPromptsDropdown();
 
   // Get highlighted tabs first to determine which should be pre-checked
   chrome.tabs.query(
@@ -233,6 +295,7 @@ async function createLLMSelection() {
       type: 'collect-page-content',
       tabIds,
       llmProvider: selectedLLMProvider,
+      promptContent: selectedPromptContent,
     });
 
     // Close the popup – the background script will take it from here

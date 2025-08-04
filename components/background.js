@@ -18,6 +18,9 @@ import {
 
 let collectedContents = [];
 
+// Store the selected prompt content for injection
+let selectedPromptContent = null;
+
 // Flag to indicate we are in the middle of collecting page contents / waiting for paste to complete
 let isProcessing = false;
 
@@ -165,6 +168,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       collectPageContentOneByOne(message.tabIds).then(async (contents) => {
         collectedContents = contents;
+        // Store the prompt content for later injection
+        selectedPromptContent = message.promptContent || null;
 
         // Get current tab to check if it's an LLM page
         const currentTab = tabs[0];
@@ -202,13 +207,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
 
-          let url = meta.url;
-          // Add hint=search parameter for ChatGPT
-          if (llmProvider === LLM_PROVIDER_CHATGPT) {
-            url += '?hints=search';
-          }
-
-          const newTab = await chrome.tabs.create({ url, active: true });
+          const newTab = await chrome.tabs.create({
+            url: meta.url,
+            active: true,
+          });
           if (newTab.id) {
             llmTabId = newTab.id; // record the new LLM tab
             injectScriptToPasteFilesAsAttachments(newTab.id);
@@ -216,7 +218,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
       });
     } else if (message.type === 'get-selected-tabs-data') {
-      sendResponse({ tabs: collectedContents });
+      sendResponse({
+        tabs: collectedContents,
+        promptContent: selectedPromptContent,
+      });
     } else if (message.type === 'markdown-paste-complete') {
       clearLoadingBadge();
       isProcessing = false;
