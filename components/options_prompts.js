@@ -3,12 +3,14 @@ const PROMPTS_STORAGE_KEY = 'savedPrompts';
 
 // DOM elements
 const promptsContainer = document.getElementById('prompts-container');
-const emptyState = document.getElementById('empty-state');
+const noPromptsState = document.getElementById('no-prompts-state');
+const noResultsState = document.getElementById('no-results-state');
 const searchInput = /** @type {HTMLInputElement} */ (
   document.getElementById('search-input')
 );
 const addPromptBtn = document.getElementById('add-prompt-btn');
 const emptyStateAddBtn = document.getElementById('empty-state-add-btn');
+const clearSearchBtn = document.getElementById('clear-search-btn');
 
 // Modal elements
 const promptModal = document.getElementById('prompt-modal');
@@ -35,6 +37,7 @@ let prompts = [];
 let editingPromptId = null;
 let deletingPromptId = null;
 let filteredPrompts = [];
+let currentSearchTerm = '';
 
 /**
  * Generate a unique ID for a prompt
@@ -129,6 +132,7 @@ async function deletePrompt(id) {
  * @param {string} searchTerm
  */
 function filterPrompts(searchTerm) {
+  currentSearchTerm = searchTerm;
   if (!searchTerm.trim()) {
     filteredPrompts = [...prompts];
   } else {
@@ -154,27 +158,23 @@ function createPromptCard(prompt) {
       ? prompt.content.substring(0, maxLength) + '...'
       : prompt.content;
 
+  // Use highlighting if there's a search term, otherwise just escape HTML
+  const highlightedName = highlightText(prompt.name, currentSearchTerm);
+  const highlightedContent = highlightText(truncatedContent, currentSearchTerm);
+
   return `
     <tr class="group hover:bg-neutral-50" data-prompt-id="${prompt.id}">
-      <td class="w-1/3 whitespace-nowrap px-6 py-4 text-sm font-medium text-neutral-900">${escapeHtml(
-        prompt.name,
-      )}</td>
-      <td class="w-2/3 max-w-lg truncate px-6 py-4 text-sm text-neutral-500">${escapeHtml(
-        truncatedContent,
-      )}</td>
+      <td class="w-1/3 whitespace-nowrap px-6 py-4 text-sm font-medium text-neutral-900">${highlightedName}</td>
+      <td class="w-2/3 max-w-lg truncate px-6 py-4 text-sm text-neutral-500">${highlightedContent}</td>
       <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
         <div class="flex items-center justify-end gap-x-4">
-          <button class="text-neutral-400 hover:text-neutral-600 edit-prompt-btn" data-prompt-id="${
-            prompt.id
-          }" title="Edit prompt">
+          <button class="text-neutral-400 hover:text-neutral-600 edit-prompt-btn" data-prompt-id="${prompt.id}" title="Edit prompt">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg">
               <path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </button>
-          <button class="text-neutral-400 hover:text-red-600 delete-prompt-btn" data-prompt-id="${
-            prompt.id
-          }" title="Delete prompt">
+          <button class="text-neutral-400 hover:text-red-600 delete-prompt-btn" data-prompt-id="${prompt.id}" title="Delete prompt">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg">
               <path d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -198,6 +198,34 @@ function escapeHtml(text) {
 }
 
 /**
+ * Highlight matching text in a string
+ * @param {string} text - The text to highlight
+ * @param {string} searchTerm - The search term to highlight
+ * @returns {string} - HTML string with highlighted matches
+ */
+function highlightText(text, searchTerm) {
+  if (!searchTerm.trim()) {
+    return escapeHtml(text);
+  }
+
+  // Escape HTML first to prevent XSS
+  const escapedText = escapeHtml(text);
+  const escapedSearchTerm = escapeHtml(searchTerm);
+
+  // Create case-insensitive regex with global flag
+  const regex = new RegExp(
+    `(${escapedSearchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
+    'gi',
+  );
+
+  // Replace matches with highlighted version
+  return escapedText.replace(
+    regex,
+    '<mark class="bg-yellow-200 text-yellow-900 px-1 rounded">$1</mark>',
+  );
+}
+
+/**
  * Render all prompts to the DOM
  */
 function renderPrompts() {
@@ -209,9 +237,21 @@ function renderPrompts() {
   if (filteredPrompts.length === 0) {
     if (promptsContainer) promptsContainer.innerHTML = '';
     if (tableElement) tableElement.style.display = 'none';
-    if (emptyState) emptyState.classList.remove('hidden');
+
+    // Show appropriate empty state based on context
+    if (prompts.length === 0) {
+      // No prompts created at all
+      if (noPromptsState) noPromptsState.classList.remove('hidden');
+      if (noResultsState) noResultsState.classList.add('hidden');
+    } else {
+      // Prompts exist but search returned no results
+      if (noResultsState) noResultsState.classList.remove('hidden');
+      if (noPromptsState) noPromptsState.classList.add('hidden');
+    }
   } else {
-    if (emptyState) emptyState.classList.add('hidden');
+    // Hide both empty states when there are results
+    if (noPromptsState) noPromptsState.classList.add('hidden');
+    if (noResultsState) noResultsState.classList.add('hidden');
     if (tableElement) tableElement.style.display = 'block';
     if (promptsContainer) {
       promptsContainer.innerHTML = filteredPrompts
@@ -425,6 +465,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     addPromptBtn.addEventListener('click', () => openEditModal());
   if (emptyStateAddBtn)
     emptyStateAddBtn.addEventListener('click', () => openEditModal());
+
+  // Clear search button
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+      if (searchInput) {
+        searchInput.value = '';
+        filterPrompts('');
+      }
+    });
+  }
 
   // Modal close buttons
   if (cancelBtn) cancelBtn.addEventListener('click', closeEditModal);
