@@ -35,7 +35,10 @@
 
 <body>
   <ul id="tabs-list"></ul>
-  <button class="btn btn-accent" id="let-llm-read-btn">Let AI read these tabs</button>
+  <div class="flex gap-2 mt-3">
+    <button class="btn btn-accent flex-1" id="let-llm-read-btn">Chat</button>
+    <button class="btn btn-outline flex-1" id="download-markdown-btn">Save as MD</button>
+  </div>
   <!-- Fullscreen loading overlay (initially hidden) -->
   <div id="loading-overlay" class="hidden fixed inset-0 flex items-center justify-center bg-black/50 z-50">
     <span class="loading loading-spinner loading-xl"></span>

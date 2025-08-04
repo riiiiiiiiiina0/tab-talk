@@ -1,5 +1,22 @@
 // @ts-check
 
+import { LLM_PROVIDER_META } from './utils/llmProviders.js';
+
+/**
+ * Check if a URL matches any supported LLM provider
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isLLMPage(url) {
+  if (!url) return false;
+  for (const meta of Object.values(LLM_PROVIDER_META)) {
+    if (url.startsWith(meta.url)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Automatically set DaisyUI theme based on system preference
 (function autoTheme() {
   const applyTheme = () => {
@@ -25,39 +42,66 @@
   const useBtn = /** @type {HTMLButtonElement|null} */ (
     document.getElementById('let-llm-read-btn')
   );
+  const downloadBtn = /** @type {HTMLButtonElement|null} */ (
+    document.getElementById('download-markdown-btn')
+  );
 
-  if (!listEl || !useBtn) {
+  if (!listEl || !useBtn || !downloadBtn) {
     console.error('Popup elements not found');
     return;
   }
 
-  // Get the tabs that are not the current tab
-  chrome.tabs.query({ currentWindow: true }, (tabs) => {
-    tabs
-      .filter((tab) => tab.url && tab.url.startsWith('http') && !tab.active)
-      .forEach((tab) => {
-        const li = document.createElement('li');
+  // Get highlighted tabs first to determine which should be pre-checked
+  chrome.tabs.query(
+    { currentWindow: true, highlighted: true },
+    (highlightedTabs) => {
+      chrome.tabs.query({ currentWindow: true }, (allTabs) => {
+        // Get active tab
+        const activeTab = allTabs.find((tab) => tab.active);
 
-        // A tab is considered "sleeping" if it is discarded or frozen
-        const isSleeping = tab.discarded || tab.frozen;
+        // Determine which tabs should be pre-checked
+        // If multiple tabs are highlighted, use those; otherwise use active tab
+        // But exclude LLM pages from being pre-checked
+        let tabsToPreCheck =
+          highlightedTabs.length > 1
+            ? highlightedTabs
+            : activeTab
+            ? [activeTab]
+            : [];
 
-        // The placeholder for the favicon
-        const faviconPlaceholder = `<div class="size-5 rounded-full bg-base-300"></div>`;
+        // Filter out LLM pages from pre-checked tabs
+        tabsToPreCheck = tabsToPreCheck.filter(
+          (tab) => tab.url && !isLLMPage(tab.url),
+        );
+        const tabsToCheck = tabsToPreCheck.map((tab) => tab.id);
 
-        // If favicon is available, create an <img> tag.
-        // Otherwise, use the placeholder.
-        const faviconEl = tab.favIconUrl
-          ? `<img src="${tab.favIconUrl}" class="size-5 rounded-sm favicon-img" data-tab-id="${tab.id}" />`
-          : faviconPlaceholder;
+        allTabs
+          .filter((tab) => tab.url && tab.url.startsWith('http'))
+          .forEach((tab) => {
+            // Check if this tab should be pre-checked
+            const shouldBeChecked = tabsToCheck.includes(tab.id);
+            const li = document.createElement('li');
 
-        li.innerHTML = `
+            // A tab is considered "sleeping" if it is discarded or frozen
+            const isSleeping = tab.discarded || tab.frozen;
+
+            // The placeholder for the favicon
+            const faviconPlaceholder = `<div class="size-5 rounded-full bg-base-300"></div>`;
+
+            // If favicon is available, create an <img> tag.
+            // Otherwise, use the placeholder.
+            const faviconEl = tab.favIconUrl
+              ? `<img src="${tab.favIconUrl}" class="size-5 rounded-sm favicon-img" data-tab-id="${tab.id}" />`
+              : faviconPlaceholder;
+
+            li.innerHTML = `
         <label class="flex flex-row gap-2 cursor-pointer items-center bg-base-200 hover:bg-base-300 transition-colors p-2 rounded-md ${
           isSleeping ? 'opacity-50' : ''
         }">
           <!-- checkbox -->
           <input type="checkbox" class="checkbox checkbox-sm" data-tab-id="${
             tab.id
-          }">
+          }" ${shouldBeChecked ? 'checked' : ''}>
 
           <!-- favicon + optional sleeping indicator -->
           <div class="relative w-5 h-5 min-w-5">
@@ -78,29 +122,51 @@
         </div>
         </label>
               `;
-        listEl.appendChild(li);
+            listEl.appendChild(li);
 
-        // Add error handler for favicon images to avoid CSP violations
-        if (tab.favIconUrl) {
-          const imgEl = li.querySelector('.favicon-img');
-          if (imgEl) {
-            imgEl.addEventListener('error', function () {
-              this.outerHTML = faviconPlaceholder;
-            });
+            // Add error handler for favicon images to avoid CSP violations
+            if (tab.favIconUrl) {
+              const imgEl = li.querySelector('.favicon-img');
+              if (imgEl) {
+                imgEl.addEventListener('error', function () {
+                  this.outerHTML = faviconPlaceholder;
+                });
+              }
+            }
+          });
+
+        // After all tabs are added, scroll to ensure the first checked tab is visible
+        setTimeout(() => {
+          const firstCheckedCheckbox = listEl.querySelector(
+            'input[type="checkbox"]:checked',
+          );
+          if (firstCheckedCheckbox) {
+            const listItem = firstCheckedCheckbox.closest('li');
+            if (listItem) {
+              listItem.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+              });
+            }
           }
-        }
+        }, 100); // Small delay to ensure DOM is fully rendered
       });
-  });
+    },
+  );
 
-  useBtn.addEventListener('click', () => {
+  function getSelectedTabIds() {
     const checked = /** @type {HTMLInputElement[]} */ ([
       ...document.querySelectorAll('#tabs-list input[type="checkbox"]:checked'),
     ]);
 
     // Extract the numeric tab IDs from the checked checkboxes
-    const tabIds = checked
+    return checked
       .map((cb) => parseInt(cb.dataset.tabId || '', 10))
       .filter((id) => !Number.isNaN(id));
+  }
+
+  useBtn.addEventListener('click', () => {
+    const tabIds = getSelectedTabIds();
 
     // Nothing selected – simply close the popup
     if (tabIds.length === 0) {
@@ -110,6 +176,22 @@
 
     // Ask the background service-worker to collect the context and process it
     chrome.runtime.sendMessage({ type: 'collect-page-content', tabIds });
+
+    // Close the popup – the background script will take it from here
+    window.close();
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    const tabIds = getSelectedTabIds();
+
+    // Nothing selected – simply close the popup
+    if (tabIds.length === 0) {
+      window.close();
+      return;
+    }
+
+    // Ask the background service-worker to download as markdown
+    chrome.runtime.sendMessage({ type: 'download-markdown', tabIds });
 
     // Close the popup – the background script will take it from here
     window.close();

@@ -25,10 +25,20 @@ let isProcessing = false;
 // can clear the loading badge if the tab is closed before the paste completes.
 let llmTabId = null;
 
-// Double-click detection variables
-let clickTimeout = null;
-let clickCount = 0;
-const DOUBLE_CLICK_DELAY = 500; // milliseconds
+/**
+ * Check if a URL matches any supported LLM provider
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isLLMPage(url) {
+  if (!url) return false;
+  for (const meta of Object.values(LLM_PROVIDER_META)) {
+    if (url.startsWith(meta.url)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * Collect page content from the given tabs one by one.
@@ -127,122 +137,6 @@ async function downloadContentsAsMarkdown(contents) {
 }
 
 /**
- * Handle single click action - original behavior
- * @param {chrome.tabs.Tab} activeTab
- */
-async function handleSingleClick(activeTab) {
-  try {
-    const highlighted = await chrome.tabs.query({
-      currentWindow: true,
-      highlighted: true,
-    });
-
-    let tabsToProcess = highlighted.length > 1 ? highlighted : [activeTab];
-    tabsToProcess = tabsToProcess.filter((tab) =>
-      (tab.url || '').startsWith('http'),
-    );
-
-    if (tabsToProcess.length === 0) {
-      console.log('[background] no tabs to process');
-      return;
-    }
-
-    const tabIds = tabsToProcess.map((tab) => tab.id);
-
-    collectedContents = await collectPageContentOneByOne(tabIds);
-
-    const logOnly = await getLogOnly();
-    if (logOnly) {
-      console.log('[background] developer mode: logging content to console');
-      console.log(collectedContents);
-      await clearLoadingBadge();
-      isProcessing = false;
-      return;
-    }
-
-    // open llm page & paste in page content
-    const llmProvider = await getLLMProvider();
-    const meta = LLM_PROVIDER_META[llmProvider];
-    if (!meta) {
-      console.error('[background] llm provider not supported:', llmProvider);
-      return;
-    }
-    let url = meta.url;
-    // Add hint=search parameter for ChatGPT
-    if (llmProvider === LLM_PROVIDER_CHATGPT) {
-      url += '?hints=search';
-    }
-    const tab = await chrome.tabs.create({ url, active: true });
-    if (tab.id) {
-      llmTabId = tab.id; // record the tab so we know which one to watch
-      injectScriptToPasteFilesAsAttachments(tab.id);
-    }
-  } catch (err) {
-    console.error('[background] single click error:', err);
-  }
-}
-
-/**
- * Handle double click action - download as markdown
- * @param {chrome.tabs.Tab} activeTab
- */
-async function handleDoubleClick(activeTab) {
-  try {
-    const highlighted = await chrome.tabs.query({
-      currentWindow: true,
-      highlighted: true,
-    });
-
-    let tabsToProcess = highlighted.length > 1 ? highlighted : [activeTab];
-    tabsToProcess = tabsToProcess.filter((tab) =>
-      (tab.url || '').startsWith('http'),
-    );
-
-    if (tabsToProcess.length === 0) {
-      console.log('[background] no tabs to process for download');
-      return;
-    }
-
-    const tabIds = tabsToProcess.map((tab) => tab.id);
-
-    const contents = await collectPageContentOneByOne(tabIds);
-    await downloadContentsAsMarkdown(contents);
-  } catch (err) {
-    console.error('[background] double click error:', err);
-  }
-}
-
-/**
- * Handle the action button click with double-click detection.
- * @param {chrome.tabs.Tab} activeTab
- */
-chrome.action.onClicked.addListener(async (activeTab) => {
-  // Ignore the click if we are already processing a previous request
-  if (isProcessing) {
-    console.log('[background] still processing, click ignored');
-    return;
-  }
-
-  clickCount++;
-
-  if (clickCount === 1) {
-    // First click - wait to see if there's a second click
-    clickTimeout = setTimeout(() => {
-      // Single click
-      console.log('[background] single click detected');
-      handleSingleClick(activeTab);
-      clickCount = 0;
-    }, DOUBLE_CLICK_DELAY);
-  } else if (clickCount === 2) {
-    // Second click - it's a double click
-    clearTimeout(clickTimeout);
-    console.log('[background] double click detected');
-    handleDoubleClick(activeTab);
-    clickCount = 0;
-  }
-});
-
-/**
  * Handle the runtime message.
  * The collect-page-content message is sent from popup page after user selected tabs from the list.
  * @param {any} message
@@ -269,12 +163,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     ) {
       showLoadingBadge();
 
-      collectPageContentOneByOne(message.tabIds).then((contents) => {
+      collectPageContentOneByOne(message.tabIds).then(async (contents) => {
         collectedContents = contents;
-        chrome.tabs.update(tabId, { active: true }, () => {
-          injectScriptToPasteFilesAsAttachments(tabId);
-          llmTabId = tabId; // record the tab so we know which one to watch
-        });
+
+        // Get current tab to check if it's an LLM page
+        const currentTab = tabs[0];
+
+        if (currentTab.url && isLLMPage(currentTab.url)) {
+          // Current tab is LLM page - inject script here as usual
+          chrome.tabs.update(tabId, { active: true }, () => {
+            injectScriptToPasteFilesAsAttachments(tabId);
+            llmTabId = tabId; // record the tab so we know which one to watch
+          });
+        } else {
+          // Current tab is NOT LLM page - open new LLM tab and inject there
+          const llmProvider = await getLLMProvider();
+          const meta = LLM_PROVIDER_META[llmProvider];
+          if (!meta) {
+            console.error(
+              '[background] llm provider not supported:',
+              llmProvider,
+            );
+            await clearLoadingBadge();
+            isProcessing = false;
+            return;
+          }
+
+          let url = meta.url;
+          // Add hint=search parameter for ChatGPT
+          if (llmProvider === LLM_PROVIDER_CHATGPT) {
+            url += '?hints=search';
+          }
+
+          const newTab = await chrome.tabs.create({ url, active: true });
+          if (newTab.id) {
+            llmTabId = newTab.id; // record the new LLM tab
+            injectScriptToPasteFilesAsAttachments(newTab.id);
+          }
+        }
       });
     } else if (message.type === 'get-selected-tabs-data') {
       sendResponse({ tabs: collectedContents });
@@ -282,6 +208,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       clearLoadingBadge();
       isProcessing = false;
       llmTabId = null;
+    } else if (
+      message.type === 'download-markdown' &&
+      Array.isArray(message.tabIds)
+    ) {
+      // Handle markdown download request from popup
+      if (!isProcessing) {
+        showLoadingBadge();
+        collectPageContentOneByOne(message.tabIds).then((contents) => {
+          downloadContentsAsMarkdown(contents);
+        });
+      }
     }
   });
 

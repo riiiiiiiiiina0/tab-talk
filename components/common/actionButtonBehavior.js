@@ -27,14 +27,9 @@ function initActionButtonBehavior() {
    * @param {chrome.tabs.Tab} tab
    */
   function updatePopupForTab(tab) {
-    if (!tab || typeof tab.id !== 'number' || !tab.url) return;
-    let popup = '';
-    try {
-      const provider = getMatchingLLMProvider(tab.url);
-      if (provider) popup = 'components/popup.html';
-    } catch {
-      // ignore non-standard URLs (chrome:// etc.)
-    }
+    if (!tab || typeof tab.id !== 'number') return;
+    // Always show popup for single click functionality
+    const popup = 'components/popup.html';
     chrome.action.setPopup({ tabId: tab.id, popup }).catch(() => {});
   }
 
