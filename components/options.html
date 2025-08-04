@@ -23,7 +23,7 @@
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4">
 
   <!-- Main Options Card -->
-  <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-6">
+  <div class="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-6">
 
     <!-- Header -->
     <div class="flex flex-col items-center space-y-2">
@@ -36,44 +36,40 @@
     <div class="space-y-6">
 
       <!-- LLM Selection Group -->
-      <div class="form-control space-y-3" id="llm-options">
+      <div class="form-control space-y-3">
         <label class="label">
           <span class="label-text text-base font-semibold text-gray-700 dark:text-gray-200">Default LLM Provider</span>
         </label>
 
         <!-- LLM Options created dynamically -->
+        <div id="llm-options" class="grid grid-cols-4 gap-2"></div>
       </div>
 
       <!-- Icon Style Selection Group -->
-      <div class="form-control space-y-3" id="icon-style-options">
+      <div class="form-control space-y-3">
         <label class="label">
           <span class="label-text text-base font-semibold text-gray-700 dark:text-gray-200">Action Icon Style</span>
         </label>
         <!-- Icon Style Options created dynamically -->
+        <div id="icon-style-options" class="grid grid-cols-4 gap-2"></div>
       </div>
 
       <!-- Saved Prompts Link -->
       <div class="pt-4">
-        <a href="options_prompts.html" class="btn btn-outline w-full text-base font-semibold mb-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
+        <a href="options_prompts.html" class="btn btn-outline w-full h-[58px] text-base font-semibold mb-3">
           Manage Saved Prompts
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
         </a>
       </div>
 
-      <!-- Action Button -->
-      <div>
-        <button id="save-btn" class="btn btn-primary w-full text-white text-base font-semibold">
-          Save
-        </button>
-      </div>
+
     </div>
 
     <!-- Developer Section -->
-    <div class="collapse collapse-arrow border border-base-300 bg-base-200">
+    <div class="collapse collapse-arrow border border-base-300 bg-base-200 hidden">
       <input type="checkbox" id="developer-section-toggle" />
       <div class="collapse-title text-xl font-medium">
         Developer

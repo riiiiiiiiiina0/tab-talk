@@ -14,10 +14,8 @@ import {
 } from './utils/iconStyle.js';
 import { getLogOnly, setLogOnly } from './utils/developerOptions.js';
 
-// Save button in the new UI (first primary button)
-const saveButton = /** @type {HTMLButtonElement|null} */ (
-  document.querySelector('#save-btn')
-);
+// Status message container for immediate save feedback
+let statusTimeoutId = null;
 
 const llmOptions = /** @type {HTMLDivElement|null} */ (
   document.querySelector('#llm-options')
@@ -78,6 +76,19 @@ const createLLMOption = (provider) => {
     </div>
     <input type="radio" name="llm-option" class="radio radio-primary" value="${provider}" />
   `;
+
+  // Add immediate save listener to the radio input
+  const radioInput = /** @type {HTMLInputElement|null} */ (
+    label.querySelector('input[type="radio"]')
+  );
+  if (radioInput) {
+    radioInput.addEventListener('change', () => {
+      if (radioInput.checked) {
+        saveSettingsImmediately();
+      }
+    });
+  }
+
   return label;
 };
 
@@ -127,6 +138,19 @@ const createIconStyleOption = (style) => {
     </div>
     <input type="radio" name="icon-style-option" class="radio radio-primary" value="${style}" />
   `;
+
+  // Add immediate save listener to the radio input
+  const radioInput = /** @type {HTMLInputElement|null} */ (
+    label.querySelector('input[type="radio"]')
+  );
+  if (radioInput) {
+    radioInput.addEventListener('change', () => {
+      if (radioInput.checked) {
+        saveSettingsImmediately();
+      }
+    });
+  }
+
   return label;
 };
 
@@ -142,19 +166,84 @@ function updateIconStyleOptionValue(style, checked) {
   if (input) /** @type {HTMLInputElement} */ (input).checked = checked;
 }
 
-// Helper: briefly replace the button text to indicate success
 /**
+ * Show a temporary status message
  * @param {string} text
+ * @param {boolean} isError
  */
-function showStatus(text) {
-  if (!saveButton) return;
-  const originalText = saveButton.textContent;
-  saveButton.textContent = text;
-  saveButton.disabled = true;
-  setTimeout(() => {
-    saveButton.textContent = originalText;
-    saveButton.disabled = false;
-  }, 1500);
+function showStatus(text, isError = false) {
+  // Clear any existing status message
+  if (statusTimeoutId) {
+    clearTimeout(statusTimeoutId);
+  }
+
+  // Remove any existing status message
+  const existingStatus = document.querySelector('.status-message');
+  if (existingStatus) {
+    existingStatus.remove();
+  }
+
+  // Create new status message
+  const statusDiv = document.createElement('div');
+  statusDiv.className = `status-message alert ${
+    isError ? 'alert-error' : 'alert-success'
+  } fixed top-4 right-4 z-50 max-w-sm shadow-lg`;
+  statusDiv.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${
+        isError
+          ? 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'
+          : 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+      }" />
+    </svg>
+    <span>${text}</span>
+  `;
+
+  document.body.appendChild(statusDiv);
+
+  // Auto-remove after 2 seconds
+  statusTimeoutId = setTimeout(() => {
+    statusDiv.remove();
+    statusTimeoutId = null;
+  }, 2000);
+}
+
+/**
+ * Save all settings immediately
+ */
+async function saveSettingsImmediately() {
+  const selectedLLMInput = /** @type {HTMLInputElement|null} */ (
+    document.querySelector('input[name="llm-option"]:checked')
+  );
+  const value = selectedLLMInput?.value || LLM_PROVIDER_DEFAULT;
+
+  const selectedIconInput = /** @type {HTMLInputElement|null} */ (
+    document.querySelector('input[name="icon-style-option"]:checked')
+  );
+  const iconValue = selectedIconInput?.value || ICON_STYLE_DEFAULT;
+
+  const logOnlyValue = logOnlyCheckbox?.checked || false;
+
+  try {
+    await Promise.all([
+      setLLMProvider(value),
+      setIconStyle(iconValue),
+      setLogOnly(logOnlyValue),
+    ]);
+
+    setHeaderIconForStyle(iconValue);
+    setFaviconForStyle(iconValue);
+    updateThemeIcon(iconValue);
+
+    try {
+      chrome.runtime.sendMessage({ type: 'icon-style-changed' });
+    } catch {}
+
+    showStatus('Settings saved!');
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    showStatus('Error saving settings', true);
+  }
 }
 
 /**
@@ -234,36 +323,10 @@ async function init() {
   // Set the default log only option
   if (logOnlyCheckbox) {
     logOnlyCheckbox.checked = await getLogOnly();
-  }
 
-  // Save on button click
-  if (saveButton) {
-    saveButton.addEventListener('click', () => {
-      const selectedLLMInput = /** @type {HTMLInputElement|null} */ (
-        document.querySelector('input[name="llm-option"]:checked')
-      );
-      const value = selectedLLMInput?.value || LLM_PROVIDER_DEFAULT;
-      const selectedIconInput = /** @type {HTMLInputElement|null} */ (
-        document.querySelector('input[name="icon-style-option"]:checked')
-      );
-      const iconValue = selectedIconInput?.value || ICON_STYLE_DEFAULT;
-      const logOnlyValue = logOnlyCheckbox?.checked || false;
-
-      Promise.all([
-        setLLMProvider(value),
-        setIconStyle(iconValue),
-        setLogOnly(logOnlyValue),
-      ])
-        .then(() => {
-          setHeaderIconForStyle(iconValue);
-          setFaviconForStyle(iconValue);
-          updateThemeIcon(iconValue);
-          try {
-            chrome.runtime.sendMessage({ type: 'icon-style-changed' });
-          } catch {}
-          showStatus('Saved!');
-        })
-        .catch(() => showStatus('Error'));
+    // Add immediate save listener to the checkbox
+    logOnlyCheckbox.addEventListener('change', () => {
+      saveSettingsImmediately();
     });
   }
 
