@@ -23,7 +23,7 @@
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4">
 
   <!-- Main Options Card -->
-  <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-6">
+  <div class="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-6">
 
     <!-- Header -->
     <div class="flex flex-col items-center space-y-2">
@@ -36,32 +36,44 @@
     <div class="space-y-6">
 
       <!-- LLM Selection Group -->
-      <div class="form-control space-y-3" id="llm-options">
+      <div class="form-control space-y-3">
         <label class="label">
           <span class="label-text text-base font-semibold text-gray-700 dark:text-gray-200">Default LLM Provider</span>
         </label>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
+          Choose which AI provider to use when processing web content. This will be the default destination when you
+          click the TabTalk action button on any page.
+        </p>
 
         <!-- LLM Options created dynamically -->
+        <div id="llm-options" class="grid grid-cols-4 gap-2"></div>
       </div>
 
       <!-- Icon Style Selection Group -->
-      <div class="form-control space-y-3" id="icon-style-options">
+      <div class="form-control space-y-3">
         <label class="label">
           <span class="label-text text-base font-semibold text-gray-700 dark:text-gray-200">Action Icon Style</span>
         </label>
         <!-- Icon Style Options created dynamically -->
+        <div id="icon-style-options" class="grid grid-cols-4 gap-2"></div>
       </div>
 
-      <!-- Action Button -->
-      <div class="pt-4">
-        <button id="save-btn" class="btn btn-primary w-full text-white text-base font-semibold">
-          Save
-        </button>
+      <!-- Saved Prompts Link -->
+      <div class="pt-4 flex flex-row items-center justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
+        <a href="options_prompts.html"
+          class="btn btn-outline h-[58px] text-black border border-gray-200 dark:border-gray-700 rounded-lg dark:text-gray-400 font-semibold dark:hover:bg-gray-600">
+          Manage Saved Prompts
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </a>
       </div>
     </div>
 
     <!-- Developer Section -->
-    <div class="collapse collapse-arrow border border-base-300 bg-base-200">
+    <!-- No longer in use -->
+    <div class="collapse collapse-arrow border border-base-300 bg-base-200 hidden">
       <input type="checkbox" id="developer-section-toggle" />
       <div class="collapse-title text-xl font-medium">
         Developer

@@ -1,0 +1,253 @@
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect" />
+  <link as="style"
+    href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40400%3B500%3B600%3B700&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"
+    onload="this.rel='stylesheet'" rel="stylesheet" />
+  <title>Stitch Design</title>
+  <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <style type="text/tailwindcss">
+    :root {
+        --primary-500: #3d98f4;
+        --neutral-50: #f8fafc;
+        --neutral-100: #f1f5f9;
+        --neutral-200: #e2e8f0;
+        --neutral-300: #cbd5e1;
+        --neutral-400: #94a3b8;
+        --neutral-500: #64748b;
+        --neutral-600: #475569;
+        --neutral-700: #334155;
+        --neutral-800: #1e293b;
+        --neutral-900: #0f172a;
+      }
+    </style>
+</head>
+
+<body class="bg-white" style='font-family: Inter, "Noto Sans", sans-serif;'>
+  <div class="relative flex size-full min-h-screen flex-col group/design-root">
+    <div class="layout-container flex h-full grow flex-col">
+      <header
+        class="flex items-center justify-between whitespace-nowrap border-b border-solid border-neutral-200 px-10 py-4">
+        <div class="flex items-center gap-4 text-neutral-900">
+          <svg class="h-8 w-8 text-[var(--primary-500)]" fill="none" viewBox="0 0 48 48"
+            xmlns="http://www.w3.org/2000/svg">
+            <path clip-rule="evenodd"
+              d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z"
+              fill="currentColor" fill-rule="evenodd"></path>
+          </svg>
+          <h1 class="text-neutral-900 text-xl font-bold leading-tight">Promptly</h1>
+        </div>
+        <div class="flex flex-1 justify-end items-center gap-4">
+          <div class="relative w-full max-w-xs">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg class="h-5 w-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"
+                  stroke-width="2"></path>
+              </svg>
+            </div>
+            <input
+              class="block w-full rounded-md border-0 bg-neutral-100 py-2.5 pl-10 pr-4 text-neutral-900 placeholder:text-neutral-500 focus:ring-2 focus:ring-inset focus:ring-[var(--primary-500)] sm:text-sm sm:leading-6"
+              placeholder="Search prompts..." type="search" />
+          </div>
+          <button
+            class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-md h-10 px-5 bg-[var(--primary-500)] text-white text-sm font-semibold leading-normal shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+            <span class="truncate">New Prompt</span>
+          </button>
+        </div>
+      </header>
+      <main class="flex-1 bg-neutral-50">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold tracking-tight text-neutral-900">Prompts</h2>
+            <p class="mt-1 text-base text-neutral-500">Create, edit, and manage your prompts with ease.</p>
+          </div>
+          <div class="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-neutral-200">
+                <thead class="bg-neutral-50">
+                  <tr>
+                    <th class="w-1/3 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500"
+                      scope="col">Name</th>
+                    <th class="w-2/3 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500"
+                      scope="col">Prompt</th>
+                    <th class="relative px-6 py-3" scope="col">
+                      <span class="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-200 bg-white">
+                  <tr class="group hover:bg-neutral-50">
+                    <td class="w-1/3 whitespace-nowrap px-6 py-4 text-sm font-medium text-neutral-900">Landing Page
+                      Headline</td>
+                    <td class="w-2/3 max-w-lg truncate px-6 py-4 text-sm text-neutral-500">Generate a catchy and
+                      compelling headline for a new SaaS product that helps users manage their finances.</td>
+                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                      <div class="flex items-center justify-end gap-x-4">
+                        <button class="text-neutral-400 hover:text-neutral-600">
+                          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round"
+                              stroke-linejoin="round"></path>
+                          </svg>
+                        </button>
+                        <button class="text-neutral-400 hover:text-neutral-600">
+                          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z">
+                            </path>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="group hover:bg-neutral-50">
+                    <td class="w-1/3 whitespace-nowrap px-6 py-4 text-sm font-medium text-neutral-900">Blog Post Idea
+                    </td>
+                    <td class="w-2/3 max-w-lg truncate px-6 py-4 text-sm text-neutral-500">Brainstorm 5 blog post ideas
+                      about the future of remote work, focusing on technology and work-life balance.</td>
+                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                      <div class="flex items-center justify-end gap-x-4">
+                        <button class="text-neutral-400 hover:text-neutral-600">
+                          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round"
+                              stroke-linejoin="round"></path>
+                          </svg>
+                        </button>
+                        <button class="text-neutral-400 hover:text-neutral-600">
+                          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z">
+                            </path>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="group hover:bg-neutral-50">
+                    <td class="w-1/3 whitespace-nowrap px-6 py-4 text-sm font-medium text-neutral-900">Product
+                      Description</td>
+                    <td class="w-2/3 max-w-lg truncate px-6 py-4 text-sm text-neutral-500">Write a short, engaging
+                      product description for a smart water bottle that tracks hydration levels.</td>
+                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                      <div class="flex items-center justify-end gap-x-4">
+                        <button class="text-neutral-400 hover:text-neutral-600">
+                          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round"
+                              stroke-linejoin="round"></path>
+                          </svg>
+                        </button>
+                        <button class="text-neutral-400 hover:text-neutral-600">
+                          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z">
+                            </path>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="group hover:bg-neutral-50">
+                    <td class="w-1/3 whitespace-nowrap px-6 py-4 text-sm font-medium text-neutral-900">Email Subject
+                      Line</td>
+                    <td class="w-2/3 max-w-lg truncate px-6 py-4 text-sm text-neutral-500">Create 3 different email
+                      subject lines for a promotional campaign offering a 20% discount.</td>
+                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                      <div class="flex items-center justify-end gap-x-4">
+                        <button class="text-neutral-400 hover:text-neutral-600">
+                          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round"
+                              stroke-linejoin="round"></path>
+                          </svg>
+                        </button>
+                        <button class="text-neutral-400 hover:text-neutral-600">
+                          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z">
+                            </path>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="group hover:bg-neutral-50">
+                    <td class="w-1/3 whitespace-nowrap px-6 py-4 text-sm font-medium text-neutral-900">Social Media Post
+                    </td>
+                    <td class="w-2/3 max-w-lg truncate px-6 py-4 text-sm text-neutral-500">Draft a Twitter post
+                      announcing a new feature launch for our project management app.</td>
+                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                      <div class="flex items-center justify-end gap-x-4">
+                        <button class="text-neutral-400 hover:text-neutral-600">
+                          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round"
+                              stroke-linejoin="round"></path>
+                          </svg>
+                        </button>
+                        <button class="text-neutral-400 hover:text-neutral-600">
+                          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z">
+                            </path>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <div aria-modal="true" class="absolute inset-0 z-10 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+      role="dialog">
+      <div class="w-full max-w-md rounded-xl bg-white shadow-2xl">
+        <div class="p-6">
+          <div class="sm:flex sm:items-start">
+            <div
+              class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+              <svg aria-hidden="true" class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" stroke-width="1.5"
+                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                  stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+              <h2 class="text-lg font-semibold text-neutral-900" id="modal-title">Delete Prompt</h2>
+              <div class="mt-2">
+                <p class="text-sm text-neutral-500">Are you sure you want to delete this prompt? This action cannot be
+                  undone.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-end gap-x-3 rounded-b-xl border-t border-neutral-200 bg-neutral-50 px-6 py-4">
+          <button
+            class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-md h-9 px-4 bg-white text-neutral-700 text-sm font-medium leading-normal shadow-sm border border-neutral-300 hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+            <span class="truncate">Cancel</span>
+          </button>
+          <button
+            class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-md h-9 px-4 bg-red-600 text-white text-sm font-medium leading-normal shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+            <span class="truncate">Delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
