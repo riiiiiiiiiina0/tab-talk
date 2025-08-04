@@ -168,16 +168,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // Get current tab to check if it's an LLM page
         const currentTab = tabs[0];
+        const selectedLLMProvider =
+          message.llmProvider || (await getLLMProvider());
 
-        if (currentTab.url && isLLMPage(currentTab.url)) {
-          // Current tab is LLM page - inject script here as usual
+        // Check if current tab matches the selected LLM provider
+        const currentTabMatchesSelectedLLM =
+          currentTab.url &&
+          isLLMPage(currentTab.url) &&
+          Object.values(LLM_PROVIDER_META).some(
+            (meta) =>
+              currentTab.url &&
+              currentTab.url.startsWith(meta.url) &&
+              LLM_PROVIDER_META[selectedLLMProvider]?.url === meta.url,
+          );
+
+        if (currentTabMatchesSelectedLLM) {
+          // Current tab is the correct LLM page - inject script here as usual
           chrome.tabs.update(tabId, { active: true }, () => {
             injectScriptToPasteFilesAsAttachments(tabId);
             llmTabId = tabId; // record the tab so we know which one to watch
           });
         } else {
-          // Current tab is NOT LLM page - open new LLM tab and inject there
-          const llmProvider = await getLLMProvider();
+          // Current tab is NOT the correct LLM page - open new LLM tab and inject there
+          const llmProvider = selectedLLMProvider;
           const meta = LLM_PROVIDER_META[llmProvider];
           if (!meta) {
             console.error(

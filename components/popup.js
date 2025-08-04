@@ -1,6 +1,10 @@
 // @ts-check
 
-import { LLM_PROVIDER_META } from './utils/llmProviders.js';
+import {
+  LLM_PROVIDER_META,
+  getLLMProvider,
+  SUPPORTED_LLM_PROVIDERS,
+} from './utils/llmProviders.js';
 
 /**
  * Check if a URL matches any supported LLM provider
@@ -15,6 +19,53 @@ function isLLMPage(url) {
     }
   }
   return false;
+}
+
+// Track the currently selected LLM provider
+let selectedLLMProvider = null;
+
+/**
+ * Create LLM selection UI
+ */
+async function createLLMSelection() {
+  const llmSelectionEl = document.getElementById('llm-selection');
+  if (!llmSelectionEl) return;
+
+  // Get the default LLM provider
+  const defaultProvider = await getLLMProvider();
+  selectedLLMProvider = defaultProvider;
+
+  SUPPORTED_LLM_PROVIDERS.forEach((provider) => {
+    const meta = LLM_PROVIDER_META[provider];
+    const button = document.createElement('button');
+    button.className = `btn btn-sm w-8 h-8 p-1 border-gray-300 ${
+      provider === defaultProvider ? 'btn-info border-none' : ''
+    }`;
+    button.dataset.provider = provider;
+    button.title = meta.name;
+
+    const img = document.createElement('img');
+    img.src = `https://www.google.com/s2/favicons?domain=${meta.url}&sz=32`;
+    img.alt = meta.name;
+    img.className = 'w-full h-full object-contain';
+    button.appendChild(img);
+
+    // Add click handler
+    button.addEventListener('click', () => {
+      // Remove selection from all buttons
+      llmSelectionEl.querySelectorAll('button').forEach((btn) => {
+        btn.classList.remove('btn-info', 'border-none');
+      });
+
+      // Add selection to clicked button
+      button.classList.add('btn-info', 'border-none');
+
+      // Update selected provider
+      selectedLLMProvider = provider;
+    });
+
+    llmSelectionEl.appendChild(button);
+  });
 }
 
 // Automatically set DaisyUI theme based on system preference
@@ -50,6 +101,9 @@ function isLLMPage(url) {
     console.error('Popup elements not found');
     return;
   }
+
+  // Initialize LLM selection
+  createLLMSelection();
 
   // Get highlighted tabs first to determine which should be pre-checked
   chrome.tabs.query(
@@ -175,7 +229,11 @@ function isLLMPage(url) {
     }
 
     // Ask the background service-worker to collect the context and process it
-    chrome.runtime.sendMessage({ type: 'collect-page-content', tabIds });
+    chrome.runtime.sendMessage({
+      type: 'collect-page-content',
+      tabIds,
+      llmProvider: selectedLLMProvider,
+    });
 
     // Close the popup – the background script will take it from here
     window.close();
