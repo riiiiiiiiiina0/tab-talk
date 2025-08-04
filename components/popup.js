@@ -30,6 +30,8 @@ let selectedLLMProvider = null;
 // Track the currently selected prompt content
 let selectedPromptContent = null;
 
+const llmButtonHighlightClass = ['!bg-blue-500', 'border-none'];
+
 /**
  * Create LLM selection UI
  */
@@ -44,8 +46,8 @@ async function createLLMSelection() {
   SUPPORTED_LLM_PROVIDERS.forEach((provider) => {
     const meta = LLM_PROVIDER_META[provider];
     const button = document.createElement('button');
-    button.className = `btn btn-sm w-7 h-7 p-1 border-gray-300 ${
-      provider === defaultProvider ? 'btn-info border-none' : ''
+    button.className = `btn btn-sm w-7 h-7 p-1 border-gray-300 dark:border-gray-500 bg-gray-200 dark:bg-gray-600 ${
+      provider === defaultProvider ? llmButtonHighlightClass.join(' ') : ''
     }`;
     button.dataset.provider = provider;
     button.title = meta.name;
@@ -60,11 +62,11 @@ async function createLLMSelection() {
     button.addEventListener('click', () => {
       // Remove selection from all buttons
       llmSelectionEl.querySelectorAll('button').forEach((btn) => {
-        btn.classList.remove('btn-info', 'border-none');
+        btn.classList.remove(...llmButtonHighlightClass);
       });
 
       // Add selection to clicked button
-      button.classList.add('btn-info', 'border-none');
+      button.classList.add(...llmButtonHighlightClass);
 
       // Update selected provider
       selectedLLMProvider = provider;
