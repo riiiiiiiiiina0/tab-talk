@@ -1,10 +1,6 @@
 # 🗂️💬 TabTalk
 
-A browser extension for any **Chromium-based browser** (Chrome, Edge, Brave, etc.) that lets you **chat with your open browser tabs**. Because it piggybacks on the ChatGPT/Gemini/Claude/Perplexity service you already using, there's **no extra subscription to buy and no API keys to paste** – just use the LLM service you already pay for. Select a couple of pages, hit the extension action button and watch them appear inside ChatGPT/Gemini/Claude/Perplexity as handy Markdown attachments. Perfect for asking things like:
-
-- "Summarise these docs"
-- "Compare these products"
-- "Explain this blog post like I'm 5"
+TabTalk is a browser extension for Chromium-based browsers (Chrome, Edge, Brave, etc.) that enables you to chat with your open browser tabs. It integrates seamlessly with your existing AI chat service subscriptions such as ChatGPT, Gemini, Claude, or Perplexity, eliminating the need for additional fees or API keys.
 
 <a href="https://buymeacoffee.com/riiiiiiiiiina" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
@@ -18,102 +14,89 @@ A browser extension for any **Chromium-based browser** (Chrome, Edge, Brave, etc
 
 ## ✨ Features
 
-### 🤖 **LLM Provider Support**
+### 🤖 LLM Provider Support
 
-- 🔄 Works with **ChatGPT**, **Gemini**, **Claude**, and **Perplexity** – choose your preferred provider
-- 💸 Uses your existing subscription – no extra fees or API keys required
-- 🎯 Smart integration (e.g., ChatGPT opens with search hints)
+* 🔄 Supports **ChatGPT**, **Gemini**, **Claude**, and **Perplexity**.
+* 💸 Leverages your existing AI subscription—no extra fees or API keys required.
 
-### 📄 **Smart Content Extraction**
+### 📄 Smart Content Extraction
 
-- 🌐 **Web pages**: Clean, readable content extraction
-- 🎬 **YouTube videos**: Title, description, channel, and captions/transcripts
-- 📝 **Notion pages**: Full support for all block types (text, media, files, etc.)
+* 🌐 **Web pages**: Clean and readable content extraction using Readability.js.
+* 🎬 **YouTube videos**: Extract titles, descriptions, channels, and transcripts.
+* 📝 **Notion pages**: Comprehensive Markdown support for text, media, and files.
 
-### 🎛️ **Three Ways to Use**
+### 🎨 Intelligent UI
 
-- 🖱️ **Single click**: Paste content directly to your LLM as file attachments
-- 🖱️🖱️ **Double click**: Download content as Markdown files
-- 📋 **Popup mode**: Select specific tabs from a visual list
+* 🗂️ Displays open tabs with favicons and page titles.
+* 😴 Marks sleeping tabs clearly with a 💤 indicator.
+* 🎨 Adaptive dark/light theme.
+* ⚙️ Customizable default LLM provider and icon style.
 
-### 🎨 **Smart Interface**
+### 🚀 Advanced Features
 
-- 🗂️ Shows all open tabs with favicons and titles
-- 😴 Marks sleeping tabs with 💤 (they take longer to load)
-- 🎨 Auto dark/light theme
-- ⚙️ Customizable settings (default LLM, icon style)
-- ⏳ Loading indicators so you know what's happening
+* ✨ **Highlighted Text**: Automatically prioritizes user-selected text.
+* 🎯 **Multi-tab Support**: Handles multiple tabs simultaneously.
+* 🛡️ **Privacy**: All data processed locally, with no third-party data transfer.
 
-### 🚀 **Advanced Features**
+### 📁 Prompt Management
 
-- ✨ **Selected text**: Automatically includes any text you've highlighted
-- 🎯 **Multi-tab**: Process multiple tabs at once
-- 📦 **Smart caching**: Faster YouTube caption loading
-- 🛡️ **Privacy**: Everything stays local – no data sent to third parties
+* 📤 Export saved prompts easily to JSON files with timestamps.
+* 📥 Import prompts from JSON files with smart merging to avoid duplicates.
+* ✅ Robust error handling and validation during prompt imports.
 
 ---
 
 ## 🛠️ Installation
 
-1. Clone or download this repo.
-2. Open your browser's extensions page (`chrome://extensions`, `edge://extensions`, etc.).
-3. Toggle **Developer mode** (top-right).
-4. Click **Load unpacked** and select the project folder (`tab-talk`).
-5. The 🗂️ icon appears in your toolbar – you're ready!
+1. Clone or download this repository.
+2. Navigate to your browser’s extension settings (`chrome://extensions`, `edge://extensions`, etc.).
+3. Enable **Developer mode**.
+4. Click **Load unpacked** and select the `tab-talk` folder.
+5. The 🗂️ icon appears in your toolbar—ready for use!
 
 ---
 
 ## 🚶‍♀️ How to Use
 
-### **Method 1: Popup Selection**
+### **Popup Selection**
 
-1. Open the pages you want to discuss.
-2. Navigate to your preferred LLM in a separate tab.
-3. Click the **TabTalk** extension icon.
-4. Select the pages you want, then hit **Let AI read these tabs**.
-5. Watch the files appear in the AI chat. Ask away! 🎉
-
-### **Method 2: Quick Actions**
-
-1. Open the pages you want to discuss.
-2. Highlight multiple tabs (Ctrl/Cmd+click) or just work with the current tab.
-3. **Single click** TabTalk → Content goes directly to your default LLM.
-4. **Double click** TabTalk → Download content as Markdown files.
+1. Open pages to interact with.
+3. Click the TabTalk icon, select tabs, and click the send button to let AI raed the content of these pages too.
 
 ---
 
 ## ⚙️ Settings
 
-Right-click the extension icon and select "Options" to customize:
+Right-click the extension icon → "Options" to customize:
 
-- **Default LLM Provider**: Choose between ChatGPT, Gemini, Claude, or Perplexity
-- **Icon Style**: Pick between Rainbow or Simple designs
+* Default LLM Provider: Choose from ChatGPT, Gemini, Claude, or Perplexity.
+* Icon Style: Select between Rainbow and Simple designs.
 
 ---
 
 ## 👩‍💻 Development
 
-```bash
-# Install type definitions
+```shell
 npm install
 ```
 
-Pure vanilla JS with no build step required – just reload the extension after making changes.
+* Pure vanilla JavaScript.
+* No build steps required—just reload the extension to apply changes.
 
 ---
 
 ## 🤝 Contributing
 
-Got ideas? Found a bug? PRs and issues are very welcome – let's make browsing + AI even more fun together! ✨
+Contributions welcome! Submit issues or pull requests to improve functionality or user experience.
 
 ---
 
 ## ⚠️ Disclaimer
 
-This project is **not** affiliated with OpenAI, Google, Anthropic, Perplexity, or any other company. Use at your own risk and respect each website's terms of service.
+Not affiliated with OpenAI, Google, Anthropic, Perplexity, or other companies. Use responsibly and follow each site's terms of service.
 
 ---
 
 ## 📜 License
 
-[MIT](LICENSE) – do whatever, but please drop a star ⭐ if this helped you!
+Licensed under [MIT](LICENSE).
