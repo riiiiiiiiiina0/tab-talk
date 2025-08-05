@@ -24,8 +24,28 @@ function isLLMPage(url) {
   return false;
 }
 
+/**
+ * Get provider id from a URL if it is an LLM page.
+ * @param {string} url
+ * @returns {string|null}
+ */
+function getLLMProviderFromURL(url) {
+  if (!url) return null;
+  for (const [providerId, meta] of Object.entries(LLM_PROVIDER_META)) {
+    if (url.startsWith(meta.url)) {
+      return providerId;
+    }
+  }
+  return null;
+}
+
+// Track the currently selected LLM provider
 // Track the currently selected LLM provider
 let selectedLLMProvider = null;
+// Record info about the current active tab so that we can adapt the UI when the
+// popup is opened on an LLM page.
+/** @type {{ isLLM:boolean, providerId:string|null, tabId:number|null }} */
+let activeTabInfo = { isLLM: false, providerId: null, tabId: null };
 
 // Track the currently selected tabs
 let selectedTabIds = [];
@@ -378,6 +398,15 @@ async function createAIMenu() {
   const aiList = document.getElementById('ai-list');
   if (!aiList) return;
 
+  // If we are already on an LLM page, lock the provider and hide the menu
+  if (activeTabInfo.isLLM && activeTabInfo.providerId) {
+    selectedLLMProvider = activeTabInfo.providerId;
+    updateAIButtonIcon(activeTabInfo.providerId);
+    aiList.innerHTML =
+      '<div class="p-4 text-sm text-center text-base-content/60">Provider locked to current tab</div>';
+    return;
+  }
+
   // Get the default LLM provider
   const defaultProvider = await getLLMProvider();
   selectedLLMProvider = defaultProvider;
@@ -610,13 +639,22 @@ function renderTabs(tabs) {
   tabs.forEach((tab) => {
     const menuItem = document.createElement('div');
     const isSelected = selectedTabIds.includes(tab.id);
-    menuItem.className = `flex items-center gap-3 mb-1 p-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-      isSelected
-        ? 'bg-blue-200 hover:bg-blue-300 text-black'
-        : 'hover:bg-base-200'
+    const isDisabled = activeTabInfo.isLLM && tab.id === activeTabInfo.tabId;
+    menuItem.className = `flex items-center gap-3 mb-1 p-2 rounded-lg transition-colors duration-200 ${
+      isDisabled
+        ? 'opacity-40 cursor-not-allowed'
+        : isSelected
+        ? 'bg-blue-200 hover:bg-blue-300 text-black cursor-pointer'
+        : 'hover:bg-base-200 cursor-pointer'
     }`;
     menuItem.dataset.tabId = tab.id;
     menuItem.tabIndex = 0;
+
+    // If this is the current active LLM tab, do not allow selection.
+    if (isDisabled) {
+      tabsList.appendChild(menuItem);
+      return;
+    }
 
     const isSleeping = tab.discarded || tab.frozen;
 
@@ -757,7 +795,190 @@ async function sendPromptToLLM() {
     .addEventListener('change', applyTheme);
 })();
 
+// ================================================================
+// New init logic that adapts the popup when opened on LLM pages
+// ================================================================
 (function init() {
+  // Determine if the current active tab is an LLM page first.
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length > 0) {
+      const tab = tabs[0];
+      activeTabInfo.tabId = tab.id || null;
+      activeTabInfo.providerId = getLLMProviderFromURL(tab.url || '');
+      activeTabInfo.isLLM = Boolean(activeTabInfo.providerId);
+    }
+
+    // If we are on an LLM page lock the provider to the detected one.
+    if (activeTabInfo.isLLM && activeTabInfo.providerId) {
+      selectedLLMProvider = activeTabInfo.providerId;
+      updateAIButtonIcon(activeTabInfo.providerId);
+    }
+
+    // Build menus with the context we now have.
+    createAIMenu();
+    createPromptsMenu();
+    createTabsMenu();
+
+    // Cache DOM references
+    const aiBtn = document.getElementById('ai-btn');
+    const promptsBtn = document.getElementById('prompts-btn');
+    const tabsBtn = document.getElementById('tabs-btn');
+    const sendBtn = document.getElementById('send-btn');
+    const filesBtn = document.getElementById('files-btn');
+    const filesInput = /** @type {HTMLInputElement|null} */ (
+      document.getElementById('files-input')
+    );
+    const filesCountSpan = document.getElementById('files-count');
+    const overlay = document.getElementById('overlay');
+    const textarea = /** @type {HTMLTextAreaElement|null} */ (
+      document.getElementById('prompt-textarea')
+    );
+
+    if (
+      !aiBtn ||
+      !promptsBtn ||
+      !tabsBtn ||
+      !sendBtn ||
+      !filesBtn ||
+      !filesInput ||
+      !overlay
+    ) {
+      console.error('Popup elements not found');
+      return;
+    }
+
+    // === Apply restrictions when on an LLM page ===
+    if (activeTabInfo.isLLM) {
+      // Disable AI provider selection (button still shows icon)
+      aiBtn.classList.add('pointer-events-none', 'opacity-50');
+
+      // Disable saved prompts selector
+      promptsBtn.classList.add('pointer-events-none', 'opacity-50');
+
+      // Disable textarea
+      if (textarea) {
+        textarea.setAttribute('disabled', 'true');
+        textarea.placeholder = 'Prompt disabled on LLM page';
+        textarea.classList.add('opacity-50');
+      }
+    } else {
+      // AI button click (only when selection allowed)
+      aiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = aiBtn.classList.contains('bg-primary/10');
+        if (isActive) {
+          hidePopups();
+        } else {
+          showPopup('ai-popup');
+        }
+      });
+
+      // Prompts button click
+      promptsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = promptsBtn.classList.contains('bg-primary/10');
+        if (isActive) {
+          hidePopups();
+        } else {
+          showPopup('prompts-popup');
+        }
+      });
+    }
+
+    // Tabs button is always active
+    tabsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isActive = tabsBtn.classList.contains('bg-primary/10');
+      if (isActive) {
+        hidePopups();
+      } else {
+        showPopup('tabs-popup');
+      }
+    });
+
+    // Send
+    sendBtn.addEventListener('click', () => sendPromptToLLM());
+
+    // Overlay close
+    overlay.addEventListener('click', hidePopups);
+
+    // Files
+    filesBtn.addEventListener('click', () => filesInput.click());
+    filesInput.addEventListener('change', () => {
+      let files = Array.from(filesInput.files || []);
+
+      const oversizedFiles = files.filter(
+        (file) => file.size > MAX_FILE_SIZE_BYTES,
+      );
+      if (oversizedFiles.length) {
+        alert(
+          `The following files exceed the 20MB limit and were skipped: ${oversizedFiles
+            .map((f) => f.name)
+            .join(', ')}`,
+        );
+      }
+      files = files.filter((file) => file.size <= MAX_FILE_SIZE_BYTES);
+
+      const availableSlots = MAX_SELECTION_ITEMS - selectedTabIds.length;
+      if (availableSlots <= 0) {
+        alert(
+          `You have already selected ${selectedTabIds.length} tabs. You can't add more files (max ${MAX_SELECTION_ITEMS} combined).`,
+        );
+        files = [];
+      } else if (files.length > availableSlots) {
+        alert(
+          `You can only add ${availableSlots} more file${
+            availableSlots === 1 ? '' : 's'
+          } (max ${MAX_SELECTION_ITEMS} tabs and files combined).`,
+        );
+        files = files.slice(0, availableSlots);
+      }
+      selectedFiles = files;
+      if (filesCountSpan) {
+        filesCountSpan.textContent = selectedFiles.length
+          ? String(selectedFiles.length)
+          : '';
+      }
+    });
+
+    // Hide popups when clicking outside
+    document.addEventListener('click', (e) => {
+      const target = /** @type {Element} */ (e.target);
+      if (
+        !target.closest('#ai-popup, #prompts-popup, #tabs-popup') &&
+        !target.closest('#ai-btn, #prompts-btn, #tabs-btn')
+      ) {
+        hidePopups();
+      }
+    });
+
+    // Enable textarea shortcuts only when textarea enabled
+    if (textarea && !activeTabInfo.isLLM) {
+      textarea.focus();
+
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          if (e.shiftKey) {
+            return;
+          }
+          e.preventDefault();
+          sendPromptToLLM();
+        } else if (e.key === '/') {
+          slashTriggerPos = textarea.selectionStart;
+          showPopup('prompts-popup');
+          setTimeout(() => focusFirstPromptItem(), 50);
+        } else if (e.key === '@') {
+          atTriggerPos = textarea.selectionStart;
+          prevSelectedTabIdsSnapshot = [...selectedTabIds];
+          showPopup('tabs-popup');
+          setTimeout(() => focusFirstTabItem(), 50);
+        }
+      });
+    }
+  });
+})();
+
+function _legacyInit() {
   // Initialize all menus
   createAIMenu();
   createPromptsMenu();
@@ -918,4 +1139,4 @@ async function sendPromptToLLM() {
       }
     });
   }
-})();
+}
