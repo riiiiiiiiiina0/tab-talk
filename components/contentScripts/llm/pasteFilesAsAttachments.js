@@ -190,6 +190,7 @@
     async (response) => {
       const tabs = Array.isArray(response?.tabs) ? response.tabs : [];
       const promptContent = (response?.promptContent || '').trim();
+      const localFiles = Array.isArray(response?.files) ? response.files : [];
 
       if (tabs.length === 0) {
         console.warn(
@@ -211,6 +212,28 @@
       if (promptContent) {
         const normalizedPrompt = promptContent.replace(/[\r\n]+/g, ' ');
         injectPromptContent(editor, normalizedPrompt);
+      }
+
+      // Attach local files selected from popup
+      for (const f of localFiles) {
+        try {
+          const blob = await (await fetch(f.dataUrl)).blob();
+          const file = new File([blob], f.name, { type: f.type || blob.type });
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          const pasteEvt = new ClipboardEvent('paste', {
+            clipboardData: dt,
+            bubbles: true,
+            cancelable: true,
+          });
+          editor.dispatchEvent(pasteEvt);
+        } catch (err) {
+          console.error(
+            '[parseFilesAsAttachments] Failed to attach local file',
+            f,
+            err,
+          );
+        }
       }
 
       tabs.forEach((tab, idx) => {

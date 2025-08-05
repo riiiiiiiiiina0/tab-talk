@@ -26,6 +26,8 @@ let collectedContents = [];
 
 // Store the selected prompt content for injection
 let selectedPromptContent = null;
+// Store local files selected from popup (serialized as {name,type,dataUrl})
+let selectedLocalFiles = [];
 
 // Flag to indicate we are in the middle of collecting page contents / waiting for paste to complete
 let isProcessing = false;
@@ -185,6 +187,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         collectedContents = contents;
         // Store the prompt content for later injection
         selectedPromptContent = message.promptContent || null;
+        selectedLocalFiles = Array.isArray(message.localFiles)
+          ? message.localFiles
+          : [];
         // Append language instruction if user has specified a reply language
         try {
           const replyLang = await getReplyLanguage();
@@ -196,7 +201,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             const langName = REPLY_LANGUAGE_META[replyLang]?.name || replyLang;
             const instruction = `Please reply in ${langName}.`;
             if (selectedPromptContent) {
-              selectedPromptContent = `${selectedPromptContent}\n\n${instruction}`;
+              selectedPromptContent = `${selectedPromptContent}${
+                selectedPromptContent.endsWith('.') ? '' : '.'
+              }\n\n${instruction}`;
             } else {
               selectedPromptContent = instruction;
             }
@@ -258,6 +265,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({
         tabs: collectedContents,
         promptContent: selectedPromptContent,
+        files: selectedLocalFiles,
       });
     } else if (message.type === 'markdown-paste-complete') {
       clearLoadingBadge();

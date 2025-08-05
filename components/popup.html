@@ -14,7 +14,7 @@
 <!-- ===== MAIN BODY ===== -->
 <!-- Fixed size popup window (400x600px) with flexbox layout -->
 
-<body class="font-sans w-[400px] h-[600px] m-0 p-0 flex flex-col">
+<body class="font-sans w-[480px] h-[600px] m-0 p-0 flex flex-col">
 
   <!-- ===== MAIN CONTENT AREA ===== -->
   <!-- Takes up most of the space, contains the prompt textarea -->
@@ -69,7 +69,22 @@
         <span class="text-xs font-medium">@ Tabs</span>
       </button>
 
+      <!-- Files Button - Open local file selector -->
+      <button
+        class="flex flex-row items-center gap-1 bg-transparent border-none cursor-pointer p-2 rounded-lg transition-colors duration-200 hover:bg-base-200"
+        id="files-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        <span class="text-xs font-medium">Files</span>
+        <span id="files-count" class="ml-1 text-xs font-semibold text-primary"></span>
+      </button>
+
       <div class="flex-1"></div>
+
+      <!-- Hidden file input -->
+      <input type="file" id="files-input" multiple accept="image/*,.pdf,text/*" class="hidden" />
 
       <!-- Send Button - Sends prompt to LLM -->
       <button
