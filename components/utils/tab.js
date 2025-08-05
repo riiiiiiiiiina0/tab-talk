@@ -35,10 +35,16 @@ export function waitForTabReady(tabId) {
     chrome.tabs.get(tabId, (tab) => {
       if (chrome.runtime.lastError || !tab) return resolve();
 
-      const maybeReload = tab.discarded || tab.frozen;
+      const needsWake =
+        tab.discarded || tab.frozen || tab.status === 'unloaded';
 
-      if (maybeReload) {
-        chrome.tabs.reload(tabId, () => waitForTabLoad(tabId).then(resolve));
+      if (needsWake) {
+        // Reload after activation in case the page was frozen / discarded so we have fresh DOM
+        chrome.tabs.reload(tabId, () => {
+          waitForTabLoad(tabId).then(() => {
+            resolve();
+          });
+        });
       } else {
         waitForTabLoad(tabId).then(resolve);
       }
