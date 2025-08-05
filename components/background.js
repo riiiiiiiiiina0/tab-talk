@@ -10,6 +10,12 @@ import {
   LLM_PROVIDER_CHATGPT,
   getLLMProvider,
 } from './utils/llmProviders.js';
+import {
+  getReplyLanguage,
+  REPLY_LANG_DEFAULT,
+  REPLY_LANG_CUSTOM,
+  REPLY_LANGUAGE_META,
+} from './utils/replyLanguage.js';
 import { getLogOnly } from './utils/developerOptions.js';
 import {
   collectPageContent,
@@ -179,6 +185,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         collectedContents = contents;
         // Store the prompt content for later injection
         selectedPromptContent = message.promptContent || null;
+        // Append language instruction if user has specified a reply language
+        try {
+          const replyLang = await getReplyLanguage();
+          if (
+            replyLang &&
+            replyLang !== REPLY_LANG_DEFAULT &&
+            replyLang !== REPLY_LANG_CUSTOM
+          ) {
+            const langName = REPLY_LANGUAGE_META[replyLang]?.name || replyLang;
+            const instruction = `Please reply in ${langName}.`;
+            if (selectedPromptContent) {
+              selectedPromptContent = `${selectedPromptContent}\n\n${instruction}`;
+            } else {
+              selectedPromptContent = instruction;
+            }
+          }
+        } catch (langErr) {
+          console.error(
+            '[background] Unable to append language instruction',
+            langErr,
+          );
+        }
 
         // Get current tab to check if it's an LLM page
         const currentTab = tabs[0];

@@ -13,9 +13,21 @@ import {
   ICON_STYLE_META,
 } from './utils/iconStyle.js';
 import { getLogOnly, setLogOnly } from './utils/developerOptions.js';
+import {
+  SUPPORTED_REPLY_LANGUAGE_PRESETS,
+  REPLY_LANG_DEFAULT,
+  getReplyLanguage,
+  setReplyLanguage,
+  REPLY_LANGUAGE_META,
+  REPLY_LANG_CUSTOM,
+} from './utils/replyLanguage.js';
 
 // Status message container for immediate save feedback
 let statusTimeoutId = null;
+// Track the last saved language value (could be preset or custom)
+let lastSavedLanguageValue = REPLY_LANG_DEFAULT;
+// Remember previous language when user toggles to Custom so we can revert if needed
+let previousLanguageValue = REPLY_LANG_DEFAULT;
 
 const llmOptions = /** @type {HTMLDivElement|null} */ (
   document.querySelector('#llm-options')
@@ -27,6 +39,14 @@ const iconStyleOptions = /** @type {HTMLDivElement|null} */ (
 
 const logOnlyCheckbox = /** @type {HTMLInputElement|null} */ (
   document.querySelector('#log-only-checkbox')
+);
+
+const languageOptions = /** @type {HTMLDivElement|null} */ (
+  document.querySelector('#language-options')
+);
+
+const customLanguageInput = /** @type {HTMLInputElement|null} */ (
+  document.querySelector('#custom-language-input')
 );
 
 /**
@@ -155,6 +175,107 @@ const createIconStyleOption = (style) => {
 };
 
 /**
+ * Create a label element for a Reply Language option.
+ * @param {string} lang
+ * @returns {HTMLLabelElement}
+ */
+const createLanguageOption = (lang) => {
+  const name = REPLY_LANGUAGE_META[lang]?.name || 'Custom';
+  const label = document.createElement('label');
+  label.classList.add(
+    'label',
+    'cursor-pointer',
+    'p-4',
+    'border',
+    'border-gray-300',
+    'dark:border-gray-600',
+    'rounded-lg',
+    'bg-white',
+    'dark:bg-gray-700',
+    'hover:bg-gray-50',
+    'dark:hover:bg-gray-600',
+    'transition-colors',
+    'flex',
+    'flex-row',
+    'items-center',
+    'justify-between',
+  );
+  label.innerHTML = `
+    <span class="label-text text-gray-600 dark:text-gray-300">${name}</span>
+    <input type="radio" name="language-option" class="radio radio-primary" value="${lang}" />
+  `;
+
+  // Immediate save and toggle custom input visibility
+  const radioInput = /** @type {HTMLInputElement|null} */ (
+    label.querySelector('input[type="radio"]')
+  );
+  if (radioInput) {
+    radioInput.addEventListener('change', () => {
+      if (!radioInput.checked) return;
+
+      if (lang === REPLY_LANG_CUSTOM) {
+        // Remember the language before switching to custom
+        previousLanguageValue = lastSavedLanguageValue;
+
+        // Show the input and pre-fill with previous custom value if any
+        if (customLanguageInput) {
+          customLanguageInput.classList.remove('hidden');
+          if (
+            !SUPPORTED_REPLY_LANGUAGE_PRESETS.includes(lastSavedLanguageValue)
+          ) {
+            customLanguageInput.value = lastSavedLanguageValue;
+          } else {
+            customLanguageInput.value = '';
+          }
+          customLanguageInput.focus();
+        }
+      } else {
+        // Hide custom input and save immediately for preset languages
+        customLanguageInput?.classList.add('hidden');
+        saveSettingsImmediately();
+      }
+    });
+  }
+
+  return label;
+};
+
+/**
+ * Update the value of the language option input element.
+ * @param {string} lang
+ * @param {boolean} checked
+ */
+function updateLanguageOptionValue(lang, checked) {
+  const input = document.querySelector(
+    `input[name="language-option"][value="${lang}"]`,
+  );
+  if (input) /** @type {HTMLInputElement} */ (input).checked = checked;
+}
+
+/**
+ * Commit the custom language value when user finishes editing.
+ */
+function commitCustomLanguage() {
+  if (!customLanguageInput) return;
+  const text = customLanguageInput.value.trim();
+  if (text) {
+    setReplyLanguage(text)
+      .then(() => {
+        lastSavedLanguageValue = text;
+        previousLanguageValue = text;
+        showStatus('Settings saved!');
+      })
+      .catch((err) => console.error('Error saving custom language', err));
+  } else {
+    // Empty input – revert to previous language
+    updateLanguageOptionValue(previousLanguageValue, true);
+    if (previousLanguageValue !== REPLY_LANG_CUSTOM) {
+      customLanguageInput.classList.add('hidden');
+    }
+  }
+}
+
+/**
  * Update the value of the Icon Style option input element.
  * @param {string} style
  * @param {boolean} checked
@@ -224,10 +345,19 @@ async function saveSettingsImmediately() {
 
   const logOnlyValue = logOnlyCheckbox?.checked || false;
 
+  const selectedLanguageInput = /** @type {HTMLInputElement|null} */ (
+    document.querySelector('input[name="language-option"]:checked')
+  );
+  let languageValue = selectedLanguageInput?.value || REPLY_LANG_DEFAULT;
+  if (languageValue === REPLY_LANG_CUSTOM) {
+    languageValue = customLanguageInput?.value.trim() || REPLY_LANG_CUSTOM;
+  }
+
   try {
     await Promise.all([
       setLLMProvider(value),
       setIconStyle(iconValue),
+      setReplyLanguage(languageValue),
       setLogOnly(logOnlyValue),
     ]);
 
@@ -239,6 +369,8 @@ async function saveSettingsImmediately() {
       chrome.runtime.sendMessage({ type: 'icon-style-changed' });
     } catch {}
 
+    lastSavedLanguageValue = languageValue;
+    previousLanguageValue = languageValue;
     showStatus('Settings saved!');
   } catch (error) {
     console.error('Error saving settings:', error);
@@ -310,6 +442,44 @@ async function init() {
     SUPPORTED_ICON_STYLES.forEach((style) => {
       const label = createIconStyleOption(style);
       iconStyleOptions.appendChild(label);
+    });
+  }
+
+  // Create the Reply Language options
+  if (languageOptions) {
+    SUPPORTED_REPLY_LANGUAGE_PRESETS.forEach((lang) => {
+      const label = createLanguageOption(lang);
+      languageOptions.appendChild(label);
+    });
+  }
+
+  // Set the default Reply Language
+  const replyLanguage = await getReplyLanguage();
+  lastSavedLanguageValue = replyLanguage;
+  previousLanguageValue = replyLanguage;
+  if (SUPPORTED_REPLY_LANGUAGE_PRESETS.includes(replyLanguage)) {
+    updateLanguageOptionValue(replyLanguage, true);
+    if (replyLanguage === REPLY_LANG_CUSTOM && customLanguageInput) {
+      customLanguageInput.classList.remove('hidden');
+    }
+  } else {
+    updateLanguageOptionValue(REPLY_LANG_CUSTOM, true);
+    if (customLanguageInput) {
+      customLanguageInput.classList.remove('hidden');
+      customLanguageInput.value = replyLanguage;
+    }
+  }
+
+  if (customLanguageInput) {
+    // Save when user presses Enter
+    customLanguageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        commitCustomLanguage();
+      }
+    });
+    // Or when the input loses focus
+    customLanguageInput.addEventListener('blur', () => {
+      commitCustomLanguage();
     });
   }
 
