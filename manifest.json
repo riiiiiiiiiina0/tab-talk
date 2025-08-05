@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TabTalk",
-  "version": "1.30",
+  "version": "1.31",
   "description": "Share any tab's content in AI chat for smarter, more relevant responses.",
   "permissions": [
     "tabs",
