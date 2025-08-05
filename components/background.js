@@ -149,6 +149,15 @@ async function downloadContentsAsMarkdown(contents) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) return;
 
+  // Open prompt editor request from content script
+  if (message.type === 'open-prompts-editor' && message.id) {
+    const url = chrome.runtime.getURL(
+      `components/options_prompts.html?edit=${message.id}`,
+    );
+    chrome.tabs.create({ url });
+    return;
+  }
+
   if (message.type === 'icon-style-changed') {
     updateActionIcon();
     return;

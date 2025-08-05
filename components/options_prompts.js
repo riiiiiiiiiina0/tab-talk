@@ -38,6 +38,7 @@ let editingPromptId = null;
 let deletingPromptId = null;
 let filteredPrompts = [];
 let currentSearchTerm = '';
+let draggedPromptId = null;
 
 /**
  * Generate a unique ID for a prompt
@@ -90,7 +91,8 @@ async function createPrompt(name, content) {
     updatedAt: new Date().toISOString(),
   };
 
-  prompts.push(newPrompt);
+  // Add to the beginning so it appears at the top of the list
+  prompts.unshift(newPrompt);
   await savePrompts(prompts);
 }
 
@@ -107,12 +109,15 @@ async function updatePrompt(id, name, content) {
     throw new Error('Prompt not found');
   }
 
-  prompts[promptIndex] = {
+  const updatedPrompt = {
     ...prompts[promptIndex],
     name: name.trim(),
     content: content.trim(),
     updatedAt: new Date().toISOString(),
   };
+  // Remove old entry and move updated one to the top
+  prompts.splice(promptIndex, 1);
+  prompts.unshift(updatedPrompt);
 
   await savePrompts(prompts);
 }
@@ -163,7 +168,7 @@ function createPromptCard(prompt) {
   const highlightedContent = highlightText(truncatedContent, currentSearchTerm);
 
   return `
-    <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" data-prompt-id="${prompt.id}">
+    <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-move" draggable="true" data-prompt-id="${prompt.id}">
       <td class="w-1/3 whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${highlightedName}</td>
       <td class="w-2/3 max-w-lg truncate px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${highlightedContent}</td>
       <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
@@ -184,6 +189,73 @@ function createPromptCard(prompt) {
       </td>
     </tr>
   `;
+}
+
+/**
+ * Drag & Drop handlers for reordering prompts
+ */
+function handleDragStart(e) {
+  const row = /** @type {HTMLElement} */ (e.currentTarget);
+  draggedPromptId = row.getAttribute('data-prompt-id');
+  row.classList.add('opacity-50');
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    try {
+      // Required for Firefox
+      e.dataTransfer.setData('text/plain', draggedPromptId || '');
+    } catch (_) {
+      /* no-op */
+    }
+  }
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  const row = /** @type {HTMLElement} */ (e.currentTarget);
+  row.classList.add('ring', 'ring-blue-400');
+}
+
+function handleDragLeave(e) {
+  const row = /** @type {HTMLElement} */ (e.currentTarget);
+  row.classList.remove('ring', 'ring-blue-400');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  const row = /** @type {HTMLElement} */ (e.currentTarget);
+  row.classList.remove('ring', 'ring-blue-400');
+  const targetPromptId = row.getAttribute('data-prompt-id');
+  if (
+    !draggedPromptId ||
+    !targetPromptId ||
+    draggedPromptId === targetPromptId
+  ) {
+    return;
+  }
+
+  const srcIndex = prompts.findIndex((p) => p.id === draggedPromptId);
+  const destIndex = prompts.findIndex((p) => p.id === targetPromptId);
+  if (srcIndex === -1 || destIndex === -1) return;
+
+  const [moved] = prompts.splice(srcIndex, 1);
+  prompts.splice(destIndex, 0, moved);
+
+  // Persist new order and re-render
+  savePrompts(prompts)
+    .then(() => {
+      filterPrompts(currentSearchTerm);
+    })
+    .catch((error) => {
+      console.error('Error saving reordered prompts:', error);
+      showStatus('Error saving prompt order. Please try again.', true);
+    });
+}
+
+function handleDragEnd() {
+  document
+    .querySelectorAll('tr[data-prompt-id]')
+    .forEach((r) => r.classList.remove('opacity-50', 'ring', 'ring-blue-400'));
+  draggedPromptId = null;
 }
 
 /**
@@ -252,10 +324,6 @@ function renderPrompts() {
     if (tableElement) tableElement.style.display = 'block';
     if (promptsContainer) {
       promptsContainer.innerHTML = filteredPrompts
-        .sort(
-          (a, b) =>
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-        )
         .map(createPromptCard)
         .join('');
     }
@@ -285,6 +353,15 @@ function addPromptCardEventListeners() {
       const promptId = btn.getAttribute('data-prompt-id');
       if (promptId) openDeleteModal(promptId);
     });
+  });
+
+  // Drag & Drop rows
+  document.querySelectorAll('tr[data-prompt-id]').forEach((row) => {
+    row.addEventListener('dragstart', handleDragStart);
+    row.addEventListener('dragover', handleDragOver);
+    row.addEventListener('dragleave', handleDragLeave);
+    row.addEventListener('drop', handleDrop);
+    row.addEventListener('dragend', handleDragEnd);
   });
 }
 
@@ -446,6 +523,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   prompts = await getPrompts();
   filteredPrompts = [...prompts];
   renderPrompts();
+
+  // Check for ?edit=<id> search param to auto-open editor
+  const params = new URLSearchParams(location.search);
+  const editId = params.get('edit');
+  if (editId) {
+    // Delay open until next tick to ensure DOM built
+    setTimeout(() => openEditModal(editId), 0);
+  }
 
   // Search input
   if (searchInput) {
