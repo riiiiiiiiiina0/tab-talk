@@ -12,6 +12,15 @@ const addPromptBtn = document.getElementById('add-prompt-btn');
 const emptyStateAddBtn = document.getElementById('empty-state-add-btn');
 const clearSearchBtn = document.getElementById('clear-search-btn');
 
+// Import/Export elements
+const exportPromptsBtn = document.getElementById('export-prompts-btn');
+const importPromptsBtn = /** @type {HTMLButtonElement} */ (
+  document.getElementById('import-prompts-btn')
+);
+const importFileInput = /** @type {HTMLInputElement} */ (
+  document.getElementById('import-file-input')
+);
+
 // Modal elements
 const promptModal = document.getElementById('prompt-modal');
 const modalTitle = document.getElementById('modal-title');
@@ -554,6 +563,90 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (searchInput) {
         searchInput.value = '';
         filterPrompts('');
+      }
+    });
+  }
+
+  // Export prompts button
+  if (exportPromptsBtn) {
+    exportPromptsBtn.addEventListener('click', () => {
+      if (prompts.length === 0) {
+        showStatus('No prompts to export.', true);
+        return;
+      }
+      const now = new Date();
+      const pad = (n) => n.toString().padStart(2, '0');
+      const filename = `tabtalk-prompts-${now.getFullYear()}${pad(
+        now.getMonth() + 1,
+      )}${pad(now.getDate())}-${pad(now.getHours())}${pad(
+        now.getMinutes(),
+      )}.json`;
+      const jsonStr = JSON.stringify(prompts, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      showStatus('Prompts exported successfully!');
+    });
+  }
+
+  // Import prompts button
+  if (importPromptsBtn && importFileInput) {
+    importPromptsBtn.addEventListener('click', () => {
+      importFileInput.value = '';
+      importFileInput.click();
+    });
+
+    importFileInput.addEventListener('change', async () => {
+      const file = importFileInput.files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const imported = JSON.parse(text);
+        if (!Array.isArray(imported)) {
+          throw new Error('Invalid file format');
+        }
+
+        const validImports = imported.filter(
+          (p) =>
+            p && typeof p.name === 'string' && typeof p.content === 'string',
+        );
+
+        if (validImports.length === 0) {
+          showStatus('No valid prompts found in file.', true);
+          return;
+        }
+
+        const existingNames = new Set(prompts.map((p) => p.name.toLowerCase()));
+        const newPrompts = validImports
+          .filter((p) => !existingNames.has(p.name.toLowerCase()))
+          .map((p) => ({
+            id: p.id || generateId(),
+            name: p.name.trim(),
+            content: p.content.trim(),
+            createdAt: p.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }));
+
+        if (newPrompts.length === 0) {
+          showStatus('All prompts in file already exist.', true);
+          return;
+        }
+
+        prompts = [...prompts, ...newPrompts];
+        await savePrompts(prompts);
+        filterPrompts(searchInput?.value || '');
+        showStatus(`${newPrompts.length} prompts imported successfully!`);
+      } catch (error) {
+        console.error('Error importing prompts', error);
+        showStatus(
+          'Error importing prompts. Please ensure the file is a valid JSON export.',
+          true,
+        );
       }
     });
   }

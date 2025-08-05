@@ -65,9 +65,22 @@
               class="block w-full rounded-md border-0 bg-gray-100 dark:bg-gray-700 py-2.5 pl-10 pr-4 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
               placeholder="Search prompts..." type="search" />
           </div>
+          <!-- Export Prompts Button -->
+          <button id="export-prompts-btn"
+            class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-md h-10 px-5 bg-gray-600 text-white text-sm font-semibold leading-normal shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600">
+            <span class="truncate">⬇️ Export</span>
+          </button>
+
+          <!-- Import Prompts Button -->
+          <button id="import-prompts-btn"
+            class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-md h-10 px-5 bg-gray-600 text-white text-sm font-semibold leading-normal shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600">
+            <span class="truncate">⬆️ Import</span>
+          </button>
+          <input type="file" id="import-file-input" accept=".json" class="hidden" />
+
           <button id="add-prompt-btn"
             class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-md h-10 px-5 bg-blue-500 text-white text-sm font-semibold leading-normal shadow-sm hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
-            <span class="truncate">New Prompt</span>
+            <span class="truncate">✍️ New Prompt</span>
           </button>
         </div>
       </header>
