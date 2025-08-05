@@ -39,6 +39,15 @@
         "components/contentScripts/youtube/triggerLoadingCaptions.js"
       ],
       "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "https://www.diabrowser.com/skills/*"
+      ],
+      "js": [
+        "components/contentScripts/diabrowser/skills.js"
+      ],
+      "run_at": "document_end"
     }
   ]
 }

@@ -208,7 +208,10 @@
       }
 
       // Inject prompt content if provided
-      if (promptContent) injectPromptContent(editor, promptContent);
+      if (promptContent) {
+        const normalizedPrompt = promptContent.replace(/[\r\n]+/g, ' ');
+        injectPromptContent(editor, normalizedPrompt);
+      }
 
       tabs.forEach((tab, idx) => {
         const { title, url, content } = tab;
