@@ -33,6 +33,13 @@ let selectedTabIds = [];
 // Track all available tabs
 let allTabs = [];
 
+// Track selected local files
+let selectedFiles = [];
+// Maximum combined number of selected tabs and local files
+const MAX_SELECTION_ITEMS = 10;
+// Maximum size per local file in bytes (20 MB)
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+
 // Track all saved prompts
 let slashTriggerPos = null;
 let atTriggerPos = null;
@@ -657,7 +664,16 @@ function renderTabs(tabs) {
         );
         menuItem.classList.add('hover:bg-base-200');
       } else {
-        // Add to selection and update hover class
+        // Add to selection only if under combined limit
+        if (
+          selectedTabIds.length + selectedFiles.length >=
+          MAX_SELECTION_ITEMS
+        ) {
+          alert(
+            `You can select up to ${MAX_SELECTION_ITEMS} tabs and files combined.`,
+          );
+          return;
+        }
         selectedTabIds.push(tabId);
         menuItem.classList.remove('hover:bg-base-200');
         menuItem.classList.add(
@@ -678,13 +694,34 @@ function renderTabs(tabs) {
 /**
  * Send prompt to LLM
  */
-function sendPromptToLLM() {
+async function sendPromptToLLM() {
   const textarea = /** @type {HTMLTextAreaElement} */ (
     document.getElementById('prompt-textarea')
   );
   const promptText = textarea ? textarea.value.trim() : '';
+  // Serialize selected local files to data URLs
+  const serializedFiles = await Promise.all(
+    selectedFiles.map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            resolve({
+              name: file.name,
+              type: file.type,
+              dataUrl: reader.result,
+            });
+          };
+          reader.readAsDataURL(file);
+        }),
+    ),
+  );
 
-  if (!promptText && selectedTabIds.length === 0) {
+  if (
+    !promptText &&
+    selectedTabIds.length === 0 &&
+    serializedFiles.length === 0
+  ) {
     window.close();
     return;
   }
@@ -695,6 +732,7 @@ function sendPromptToLLM() {
     tabIds: selectedTabIds,
     llmProvider: selectedLLMProvider,
     promptContent: promptText,
+    localFiles: serializedFiles,
   });
 
   // Close the popup
@@ -730,9 +768,22 @@ function sendPromptToLLM() {
   const promptsBtn = document.getElementById('prompts-btn');
   const tabsBtn = document.getElementById('tabs-btn');
   const sendBtn = document.getElementById('send-btn');
+  const filesBtn = document.getElementById('files-btn');
+  const filesInput = /** @type {HTMLInputElement|null} */ (
+    document.getElementById('files-input')
+  );
+  const filesCountSpan = document.getElementById('files-count');
   const overlay = document.getElementById('overlay');
 
-  if (!aiBtn || !promptsBtn || !tabsBtn || !sendBtn || !overlay) {
+  if (
+    !aiBtn ||
+    !promptsBtn ||
+    !tabsBtn ||
+    !sendBtn ||
+    !filesBtn ||
+    !filesInput ||
+    !overlay
+  ) {
     console.error('Popup elements not found');
     return;
   }
@@ -775,6 +826,48 @@ function sendPromptToLLM() {
 
   // Hide popups when clicking overlay
   overlay.addEventListener('click', hidePopups);
+
+  // Files button opens file selector
+  filesBtn.addEventListener('click', () => filesInput.click());
+
+  // Handle file selection and update badge
+  filesInput.addEventListener('change', () => {
+    let files = Array.from(filesInput.files || []);
+
+    // Filter out files that exceed the size limit
+    const oversizedFiles = files.filter(
+      (file) => file.size > MAX_FILE_SIZE_BYTES,
+    );
+    if (oversizedFiles.length) {
+      alert(
+        `The following files exceed the 20MB limit and were skipped: ${oversizedFiles
+          .map((f) => f.name)
+          .join(', ')}`,
+      );
+    }
+    files = files.filter((file) => file.size <= MAX_FILE_SIZE_BYTES);
+
+    const availableSlots = MAX_SELECTION_ITEMS - selectedTabIds.length;
+    if (availableSlots <= 0) {
+      alert(
+        `You have already selected ${selectedTabIds.length} tabs. You can't add more files (max ${MAX_SELECTION_ITEMS} combined).`,
+      );
+      files = [];
+    } else if (files.length > availableSlots) {
+      alert(
+        `You can only add ${availableSlots} more file${
+          availableSlots === 1 ? '' : 's'
+        } (max ${MAX_SELECTION_ITEMS} tabs and files combined).`,
+      );
+      files = files.slice(0, availableSlots);
+    }
+    selectedFiles = files;
+    if (filesCountSpan) {
+      filesCountSpan.textContent = selectedFiles.length
+        ? String(selectedFiles.length)
+        : '';
+    }
+  });
 
   // Hide popups when clicking outside
   document.addEventListener('click', (e) => {
