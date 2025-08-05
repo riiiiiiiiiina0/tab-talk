@@ -604,7 +604,9 @@ function renderTabs(tabs) {
     const menuItem = document.createElement('div');
     const isSelected = selectedTabIds.includes(tab.id);
     menuItem.className = `flex items-center gap-3 mb-1 p-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-      isSelected ? 'bg-blue-200 hover:bg-blue-300' : 'hover:bg-base-200'
+      isSelected
+        ? 'bg-blue-200 hover:bg-blue-300 text-black'
+        : 'hover:bg-base-200'
     }`;
     menuItem.dataset.tabId = tab.id;
     menuItem.tabIndex = 0;
@@ -630,11 +632,12 @@ function renderTabs(tabs) {
     const query = searchInput ? searchInput.value.trim() : '';
     const titleHtml = highlightQuery(tab.title || '(No title)', query);
     const urlHtml = highlightQuery(tab.url || '', query);
+    const textClass = isSelected ? 'text-black' : '';
     content.innerHTML = `
-        <div class="font-medium leading-tight truncate ${
-          isSleeping ? 'opacity-50' : ''
-        }">${titleHtml}${isSleeping ? ' 💤' : ''}</div>
-        <div class="text-xs text-base-content/60 leading-tight mt-0.5 truncate">${urlHtml}</div>
+        <div class="font-medium leading-tight truncate ${textClass} ${
+      isSleeping ? 'opacity-50' : ''
+    }">${titleHtml}${isSleeping ? ' 💤' : ''}</div>
+        <div class="text-xs text-base-content/60 leading-tight mt-0.5 truncate ${textClass}">${urlHtml}</div>
       `;
 
     menuItem.appendChild(icon);
@@ -647,13 +650,21 @@ function renderTabs(tabs) {
       if (selectedTabIds.includes(tabId)) {
         // Remove from selection and update hover class
         selectedTabIds = selectedTabIds.filter((id) => id !== tabId);
-        menuItem.classList.remove('bg-blue-200', 'hover:bg-blue-300');
+        menuItem.classList.remove(
+          'bg-blue-200',
+          'hover:bg-blue-300',
+          'text-black',
+        );
         menuItem.classList.add('hover:bg-base-200');
       } else {
         // Add to selection and update hover class
         selectedTabIds.push(tabId);
         menuItem.classList.remove('hover:bg-base-200');
-        menuItem.classList.add('bg-blue-200', 'hover:bg-blue-300');
+        menuItem.classList.add(
+          'bg-blue-200',
+          'hover:bg-blue-300',
+          'text-black',
+        );
       }
 
       // Update the selected tabs display
@@ -718,9 +729,10 @@ function sendPromptToLLM() {
   const aiBtn = document.getElementById('ai-btn');
   const promptsBtn = document.getElementById('prompts-btn');
   const tabsBtn = document.getElementById('tabs-btn');
+  const sendBtn = document.getElementById('send-btn');
   const overlay = document.getElementById('overlay');
 
-  if (!aiBtn || !promptsBtn || !tabsBtn || !overlay) {
+  if (!aiBtn || !promptsBtn || !tabsBtn || !sendBtn || !overlay) {
     console.error('Popup elements not found');
     return;
   }
@@ -744,6 +756,11 @@ function sendPromptToLLM() {
     } else {
       showPopup('prompts-popup');
     }
+  });
+
+  // Send button click
+  sendBtn.addEventListener('click', () => {
+    sendPromptToLLM();
   });
 
   tabsBtn.addEventListener('click', (e) => {
