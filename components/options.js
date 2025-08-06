@@ -6,14 +6,6 @@ import {
   LLM_PROVIDER_META,
 } from './utils/llmProviders.js';
 import {
-  SUPPORTED_ICON_STYLES,
-  ICON_STYLE_DEFAULT,
-  getIconStyle,
-  setIconStyle,
-  ICON_STYLE_META,
-} from './utils/iconStyle.js';
-import { getLogOnly, setLogOnly } from './utils/developerOptions.js';
-import {
   SUPPORTED_REPLY_LANGUAGE_PRESETS,
   REPLY_LANG_DEFAULT,
   getReplyLanguage,
@@ -31,14 +23,6 @@ let previousLanguageValue = REPLY_LANG_DEFAULT;
 
 const llmOptions = /** @type {HTMLDivElement|null} */ (
   document.querySelector('#llm-options')
-);
-
-const iconStyleOptions = /** @type {HTMLDivElement|null} */ (
-  document.querySelector('#icon-style-options')
-);
-
-const logOnlyCheckbox = /** @type {HTMLInputElement|null} */ (
-  document.querySelector('#log-only-checkbox')
 );
 
 const languageOptions = /** @type {HTMLDivElement|null} */ (
@@ -123,56 +107,6 @@ function updateLLMOptionValue(provider, checked) {
   );
   if (input) /** @type {HTMLInputElement} */ (input).checked = checked;
 }
-
-/**
- * Create a label element for an Icon Style option.
- * @param {string} style
- * @returns {HTMLLabelElement}
- */
-const createIconStyleOption = (style) => {
-  const name = ICON_STYLE_META[style].name;
-  const iconSrc = `../icons/${style}/icon-32x32.png`;
-  const label = document.createElement('label');
-  label.classList.add(
-    'label',
-    'cursor-pointer',
-    'p-4',
-    'border',
-    'border-gray-300',
-    'dark:border-gray-600',
-    'rounded-lg',
-    'bg-white',
-    'dark:bg-gray-700',
-    'hover:bg-gray-50',
-    'dark:hover:bg-gray-600',
-    'transition-colors',
-    'flex',
-    'flex-row',
-    'items-center',
-    'justify-between',
-  );
-  label.innerHTML = `
-    <div class="flex items-center space-x-2">
-      <img src="${iconSrc}" alt="${name} icon" class="w-6 h-6" />
-      <span class="label-text text-gray-600 dark:text-gray-300">${name}</span>
-    </div>
-    <input type="radio" name="icon-style-option" class="radio radio-primary" value="${style}" />
-  `;
-
-  // Add immediate save listener to the radio input
-  const radioInput = /** @type {HTMLInputElement|null} */ (
-    label.querySelector('input[type="radio"]')
-  );
-  if (radioInput) {
-    radioInput.addEventListener('change', () => {
-      if (radioInput.checked) {
-        saveSettingsImmediately();
-      }
-    });
-  }
-
-  return label;
-};
 
 /**
  * Create a label element for a Reply Language option.
@@ -341,9 +275,6 @@ async function saveSettingsImmediately() {
   const selectedIconInput = /** @type {HTMLInputElement|null} */ (
     document.querySelector('input[name="icon-style-option"]:checked')
   );
-  const iconValue = selectedIconInput?.value || ICON_STYLE_DEFAULT;
-
-  const logOnlyValue = logOnlyCheckbox?.checked || false;
 
   const selectedLanguageInput = /** @type {HTMLInputElement|null} */ (
     document.querySelector('input[name="language-option"]:checked')
@@ -354,16 +285,7 @@ async function saveSettingsImmediately() {
   }
 
   try {
-    await Promise.all([
-      setLLMProvider(value),
-      setIconStyle(iconValue),
-      setReplyLanguage(languageValue),
-      setLogOnly(logOnlyValue),
-    ]);
-
-    setHeaderIconForStyle(iconValue);
-    setFaviconForStyle(iconValue);
-    updateThemeIcon(iconValue);
+    await Promise.all([setLLMProvider(value), setReplyLanguage(languageValue)]);
 
     try {
       chrome.runtime.sendMessage({ type: 'icon-style-changed' });
@@ -437,14 +359,6 @@ async function init() {
   const llmProvider = await getLLMProvider();
   updateLLMOptionValue(llmProvider, true);
 
-  // Create the Icon Style options
-  if (iconStyleOptions) {
-    SUPPORTED_ICON_STYLES.forEach((style) => {
-      const label = createIconStyleOption(style);
-      iconStyleOptions.appendChild(label);
-    });
-  }
-
   // Create the Reply Language options
   if (languageOptions) {
     SUPPORTED_REPLY_LANGUAGE_PRESETS.forEach((lang) => {
@@ -482,26 +396,6 @@ async function init() {
       commitCustomLanguage();
     });
   }
-
-  // Set the default Icon Style
-  const iconStyle = await getIconStyle();
-  setHeaderIconForStyle(iconStyle);
-  setFaviconForStyle(iconStyle);
-  updateIconStyleOptionValue(iconStyle, true);
-  updateThemeIcon(iconStyle);
-
-  // Set the default log only option
-  if (logOnlyCheckbox) {
-    logOnlyCheckbox.checked = await getLogOnly();
-
-    // Add immediate save listener to the checkbox
-    logOnlyCheckbox.addEventListener('change', () => {
-      saveSettingsImmediately();
-    });
-  }
-
-  // Initialize theme icon and set up theme change listener
-  updateThemeIcon(iconStyle);
 }
 
 init();

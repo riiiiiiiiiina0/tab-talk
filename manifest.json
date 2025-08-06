@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "TabTalk",
+  "name": "Bear Talk",
   "version": "1.34",
-  "description": "Share any tab's content in AI chat for smarter, more relevant responses.",
+  "description": "Chat directly with your browser tabs using your own AI service—seamless and fee-free.",
   "permissions": [
     "tabs",
     "activeTab",
@@ -15,14 +15,14 @@
     "<all_urls>"
   ],
   "icons": {
-    "16": "icons/rainbow/icon-16x16.png",
-    "32": "icons/rainbow/icon-32x32.png",
-    "48": "icons/rainbow/icon-48x48.png",
-    "128": "icons/rainbow/icon-128x128.png"
+    "16": "icons/icon-16x16.png",
+    "32": "icons/icon-32x32.png",
+    "48": "icons/icon-48x48.png",
+    "128": "icons/icon-128x128.png"
   },
   "action": {
-    "default_icon": "icons/rainbow/icon-48x48.png",
-    "default_title": "TabTalk",
+    "default_icon": "icons/icon-48x48.png",
+    "default_title": "Bear Talk",
     "default_popup": "components/popup.html"
   },
   "options_page": "components/options.html",

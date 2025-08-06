@@ -70,7 +70,7 @@
       );
 
       if (!inviteAnchor) {
-        console.warn('[TabTalk] Could not find invite anchor on skill page');
+        console.warn('[BearTalk] Could not find invite anchor on skill page');
         return;
       }
 
@@ -84,8 +84,8 @@
       );
 
       const buttonLabel = existingPrompt
-        ? 'Edit in TabTalk'
-        : 'Save to TabTalk';
+        ? 'Edit in Bear Talk'
+        : 'Save to Bear Talk';
       inviteAnchor.innerHTML = `
         <div class="relative z-10">
           <div class="relative flex items-center w-max">
@@ -164,20 +164,20 @@
             // Update in-memory reference so subsequent clicks go to edit flow
             existingPrompt = newPrompt;
 
-            // Feedback: show "Saved" briefly, then turn into "Edit in TabTalk"
+            // Feedback: show "Saved" briefly, then turn into "Edit in Bear Talk"
             const span = inviteAnchor.querySelector('span');
             if (span) span.textContent = 'Saved';
             setTimeout(() => {
-              if (span) span.textContent = 'Edit in TabTalk';
+              if (span) span.textContent = 'Edit in Bear Talk';
             }, 2000);
           } catch (err) {
-            console.error('[TabTalk] Failed to save prompt:', err);
+            console.error('[BearTalk] Failed to save prompt:', err);
           }
         },
         { capture: true },
       );
     } catch (err) {
-      console.error('[TabTalk] diabrowser skill content script error:', err);
+      console.error('[BearTalk] diabrowser skill content script error:', err);
     }
   }
 

@@ -1,10 +1,6 @@
 import './common/actionButtonBehavior.js';
 import './common/managerYouTube.js';
-import {
-  showLoadingBadge,
-  clearLoadingBadge,
-  updateActionIcon,
-} from './common/actionButton.js';
+import { showLoadingBadge, clearLoadingBadge } from './common/actionButton.js';
 import {
   LLM_PROVIDER_META,
   LLM_PROVIDER_CHATGPT,
@@ -16,7 +12,6 @@ import {
   REPLY_LANG_CUSTOM,
   REPLY_LANGUAGE_META,
 } from './utils/replyLanguage.js';
-import { getLogOnly } from './utils/developerOptions.js';
 import {
   collectPageContent,
   injectScriptToPasteFilesAsAttachments,
@@ -166,11 +161,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return;
   }
 
-  if (message.type === 'icon-style-changed') {
-    updateActionIcon();
-    return;
-  }
-
   // keep the current tab id first, we might need to jump back to it
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs.length === 0) return;
@@ -296,14 +286,4 @@ chrome.tabs.onRemoved.addListener((removedTabId) => {
     isProcessing = false;
     llmTabId = null;
   }
-});
-
-// Ensure the correct icon is applied immediately after the extension is installed or updated
-chrome.runtime.onInstalled.addListener(() => {
-  updateActionIcon();
-});
-
-// Ensure the correct icon is applied when the browser starts
-chrome.runtime.onStartup.addListener(() => {
-  updateActionIcon();
 });

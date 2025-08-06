@@ -576,7 +576,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       const now = new Date();
       const pad = (n) => n.toString().padStart(2, '0');
-      const filename = `tabtalk-prompts-${now.getFullYear()}${pad(
+      const filename = `beartalk-prompts-${now.getFullYear()}${pad(
         now.getMonth() + 1,
       )}${pad(now.getDate())}-${pad(now.getHours())}${pad(
         now.getMinutes(),

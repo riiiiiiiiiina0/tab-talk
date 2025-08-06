@@ -1,28 +1,3 @@
-import { getIconStyle } from '../utils/iconStyle.js';
-
-/**
- * Update the extension action icon based on theme and selected icon style.
- */
-export async function updateActionIcon() {
-  const style = await getIconStyle();
-  const iconName = style === 'simple' ? 'simple' : 'rainbow';
-  const iconDict = {
-    16: `/icons/${iconName}/icon-16x16.png`,
-    32: `/icons/${iconName}/icon-32x32.png`,
-    48: `/icons/${iconName}/icon-48x48.png`,
-    128: `/icons/${iconName}/icon-128x128.png`,
-  };
-
-  chrome.action.setIcon({ path: iconDict });
-  chrome.tabs.query({}, (tabs) => {
-    for (const tab of tabs) {
-      if (tab && tab.id !== undefined) {
-        chrome.action.setIcon({ path: iconDict, tabId: tab.id });
-      }
-    }
-  });
-}
-
 const loadingBadgeSequence = [
   '🕛',
   '🕐',

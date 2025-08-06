@@ -4,14 +4,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TabTalk Options</title>
+  <title>Bear Talk Options</title>
   <link href="../libs/daisyui@5.css" rel="stylesheet" type="text/css" />
   <script src="../libs/tailwindcss@4.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Favicon -->
-  <link id="favicon" rel="icon" type="image/png" href="../icons/rainbow/icon-32x32.png" />
+  <link id="favicon" rel="icon" type="image/png" href="../icons/icon-32x32.png" />
   <style>
     /* Apply Inter font family */
     body {
@@ -27,9 +27,9 @@
 
     <!-- Header -->
     <div class="flex flex-col items-center space-y-2">
-      <img src="../icons/rainbow/icon-128x128.png" alt="TabTalk Icon" id="theme-icon"
-        class="w-32 h-32 p-2 rounded-full bg-base-300 dark:bg-gray-700">
-      <h1 class="text-3xl mt-4 font-bold text-gray-800 dark:text-white">TabTalk – Options</h1>
+      <img src="../icons/icon-128x128.png" alt="Bear Talk Icon" id="theme-icon"
+        class="w-32 h-32 p-2 rounded-xl bg-base-300 dark:bg-gray-700">
+      <h1 class="text-3xl mt-4 font-bold text-gray-800 dark:text-white">Bear Talk – Options</h1>
     </div>
 
     <!-- Form Section -->
@@ -42,7 +42,7 @@
         </label>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
           Choose which AI provider to use when processing web content. This will be the default destination when you
-          click the TabTalk action button on any page.
+          click the Bear Talk action button on any page.
         </p>
 
         <!-- LLM Options created dynamically -->
@@ -65,15 +65,6 @@
           class="input input-bordered w-full mt-2 hidden" />
       </div>
 
-      <!-- Icon Style Selection Group -->
-      <div class="form-control space-y-3">
-        <label class="label">
-          <span class="label-text text-base font-semibold text-gray-700 dark:text-gray-200">Action Icon Style</span>
-        </label>
-        <!-- Icon Style Options created dynamically -->
-        <div id="icon-style-options" class="grid grid-cols-4 gap-2"></div>
-      </div>
-
       <!-- Saved Prompts Link -->
       <div class="pt-4 flex flex-row items-center justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
         <a href="options_prompts.html"
@@ -84,31 +75,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
         </a>
-      </div>
-    </div>
-
-    <!-- Developer Section -->
-    <!-- No longer in use -->
-    <div class="collapse collapse-arrow border border-base-300 bg-base-200 hidden">
-      <input type="checkbox" id="developer-section-toggle" />
-      <div class="collapse-title text-xl font-medium">
-        Developer
-      </div>
-      <div class="collapse-content">
-        <div class="form-control">
-          <label class="label cursor-pointer">
-            <span class="label-text">Log content in console only</span>
-            <input type="checkbox" id="log-only-checkbox" class="checkbox" />
-          </label>
-        </div>
-        <div class="alert alert-warning mt-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
-            viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span>Warning: For debugging only. Do not enable unless you know what you are doing.</span>
-        </div>
       </div>
     </div>
   </div>
