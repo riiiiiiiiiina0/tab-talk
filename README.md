@@ -1,4 +1,4 @@
-## 🐻‍❄️ Bear Talk
+## 🐻‍❄️💬🤖 Bear Talk
 
 ### Talk to your browser tabs. Yes, really. It’s not weird if it’s with a bear.
 
