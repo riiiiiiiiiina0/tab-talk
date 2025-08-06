@@ -2,7 +2,7 @@
 
 ### Talk to your browser tabs. Yes, really. It’s not weird if it’s with a bear.
 
-[![Watch the demo on YouTube](https://img.youtube.com/vi/te0KYbN8FzQ/0.jpg)](https://www.youtube.com/watch?v=te0KYbN8FzQ)
+![](./docs/poster.jpeg)
 
 <a href="https://buymeacoffee.com/riiiiiiiiiina" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
