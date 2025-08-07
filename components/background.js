@@ -221,12 +221,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           ) {
             const dataUrl = await chrome.tabs.captureVisibleTab(
               currentTab.windowId,
-              { format: 'png' },
+              { format: 'jpeg', quality: 80 },
             );
             if (dataUrl) {
               selectedLocalFiles.unshift({
-                name: 'screenshot.png',
-                type: 'image/png',
+                name: 'screenshot.jpg',
+                type: 'image/jpeg',
                 dataUrl,
               });
             }
