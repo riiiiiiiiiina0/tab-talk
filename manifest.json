@@ -9,7 +9,8 @@
     "scripting",
     "storage",
     "webRequest",
-    "downloads"
+    "downloads",
+    "notifications"
   ],
   "host_permissions": [
     "<all_urls>"
