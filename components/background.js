@@ -158,10 +158,11 @@ async function disableProviderAndNotify(providerId) {
     try {
       chrome.notifications.create({
         type: 'basic',
-        iconUrl: 'icons/icon-128x128.png',
+        iconUrl: chrome.runtime.getURL('icons/icon-128x128.png'),
         title: 'Provider disabled',
         message: `${providerName} cannot be scripted in this browser. It has been disabled in Bear Talk.`,
         silent: false,
+        requireInteraction: true,
       });
     } catch (e) {
       console.warn('Notification failed:', e);
@@ -273,7 +274,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
           }
         } catch (screenshotErr) {
-          console.error('[background] screenshot capture failed:', screenshotErr);
+          console.error(
+            '[background] screenshot capture failed:',
+            screenshotErr,
+          );
         }
 
         // Check if current tab matches the selected LLM provider
@@ -319,6 +323,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
           if (newTab.id) {
             const ok = await injectScriptToPasteFilesAsAttachments(newTab.id);
+            console.log(
+              '[background] injectScriptToPasteFilesAsAttachments',
+              ok,
+            );
             if (!ok) {
               await clearLoadingBadge();
               isProcessing = false;
