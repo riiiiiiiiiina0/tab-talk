@@ -16,24 +16,45 @@ function getMatchingLLMProvider(url) {
 }
 
 /**
+ * Determine whether the extension action should be enabled for a given tab.
+ * Disallow non-http(s) URLs and Chrome Web Store pages.
+ * @param {chrome.tabs.Tab} tab
+ * @returns {boolean}
+ */
+function isActionAllowedForTab(tab) {
+  const url = tab?.url || '';
+  const isHttp = url.startsWith('http://') || url.startsWith('https://');
+  const isWebStore = url.startsWith('https://chrome.google.com/webstore');
+  return isHttp && !isWebStore;
+}
+
+/**
  * Initialise the action button behavior.
  */
 function initActionButtonBehavior() {
   // === Per-tab popup handling ===
   /**
-   * Sets the extension action popup depending on whether the given tab is a supported app.
-   * If the tab is ChatGPT/Gemini the usual popup is shown, otherwise we clear the popup so
-   * that `chrome.action.onClicked` fires.
+   * Sets the extension action popup and enabled state depending on the tab URL.
+   * If the tab URL is not allowed, clear the popup and disable the action so clicks have no effect.
    * @param {chrome.tabs.Tab} tab
    */
   function updatePopupForTab(tab) {
     if (!tab || typeof tab.id !== 'number') return;
-    // Always show popup for single click functionality
-    const popup = 'components/popup.html';
-    chrome.action.setPopup({ tabId: tab.id, popup }).catch(() => {});
+
+    const allowed = isActionAllowedForTab(tab);
+
+    if (allowed) {
+      const popup = 'components/popup.html';
+      chrome.action.enable(tab.id).catch(() => {});
+      chrome.action.setPopup({ tabId: tab.id, popup }).catch(() => {});
+    } else {
+      // Clear popup and disable action so clicking has no effect
+      chrome.action.setPopup({ tabId: tab.id, popup: '' }).catch(() => {});
+      chrome.action.disable(tab.id).catch(() => {});
+    }
   }
 
-  // Initialise popup for all existing tabs when the service-worker starts
+  // Initialise popup/enabled state for all existing tabs when the service-worker starts
   chrome.tabs.query({}, (tabs) => tabs.forEach(updatePopupForTab));
 
   chrome.tabs.onActivated.addListener(({ tabId }) => {
@@ -42,11 +63,7 @@ function initActionButtonBehavior() {
 
   // Keep popup assignment up-to-date
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    // Re-evaluate the popup whenever the URL changes *or* the page reloads (status changes).
-    // Relying only on changeInfo.url misses pure reloads where the URL stays the same,
-    // which left the default popup in place and prevented the action click handler
-    // from firing. Also handle the initial "loading" event so that the service-worker
-    // can correct the popup right after it wakes up.
+    // Re-evaluate whenever the URL changes or the page reloads
     if (
       changeInfo.url !== undefined ||
       changeInfo.status === 'loading' ||
