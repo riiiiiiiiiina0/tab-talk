@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bear Talk",
-  "version": "1.39",
+  "version": "1.40",
   "description": "Chat directly with your browser tabs using your own AI service—seamless and fee-free.",
   "permissions": [
     "tabs",
