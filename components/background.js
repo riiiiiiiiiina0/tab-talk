@@ -317,8 +317,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
 
+          // When opening ChatGPT, append a hint parameter to the URL
+          let targetUrl = meta.url;
+          try {
+            if (llmProvider === LLM_PROVIDER_CHATGPT) {
+              const u = new URL(meta.url);
+              u.searchParams.set('hints', 'search');
+              targetUrl = u.toString();
+            }
+          } catch (e) {
+            // Fallback to meta.url if URL manipulation fails
+            targetUrl = meta.url;
+          }
+
           const newTab = await chrome.tabs.create({
-            url: meta.url,
+            url: targetUrl,
             active: true,
           });
           if (newTab.id) {
