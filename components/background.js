@@ -210,6 +210,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const selectedLLMProvider =
           message.llmProvider || (await getLLMProvider());
 
+        // If only the current active tab is selected and it's not an LLM page,
+        // capture a screenshot of the visible area and include it as an attachment
+        try {
+          if (
+            Array.isArray(message.tabIds) &&
+            message.tabIds.length === 1 &&
+            message.tabIds[0] === tabId &&
+            !isLLMPage(currentTab?.url || '')
+          ) {
+            const dataUrl = await chrome.tabs.captureVisibleTab(
+              currentTab.windowId,
+              { format: 'jpeg', quality: 80 },
+            );
+            if (dataUrl) {
+              selectedLocalFiles.unshift({
+                name: 'screenshot.jpg',
+                type: 'image/jpeg',
+                dataUrl,
+              });
+            }
+          }
+        } catch (screenshotErr) {
+          console.error('[background] screenshot capture failed:', screenshotErr);
+        }
+
         // Check if current tab matches the selected LLM provider
         const currentTabMatchesSelectedLLM =
           currentTab.url &&
