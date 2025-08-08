@@ -435,8 +435,9 @@ async function createAIMenu() {
   // If any providers are disabled, show a small notice
   if (Array.from(disabledProviders).length > 0) {
     const notice = document.createElement('div');
-    notice.className = 'px-3 pt-2 text-xs text-warning';
-    notice.textContent = 'Some providers are disabled due to browser restrictions.';
+    notice.className = 'px-3 py-2 text-xs text-warning';
+    notice.textContent =
+      'Some providers are disabled due to browser restrictions.';
     aiList.appendChild(notice);
   }
 
@@ -448,7 +449,9 @@ async function createAIMenu() {
       isDisabled
         ? 'opacity-40 cursor-not-allowed'
         : 'cursor-pointer transition-colors duration-200 ' +
-          (isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-base-200')
+          (isSelected
+            ? 'bg-primary/10 hover:bg-primary/20'
+            : 'hover:bg-base-200')
     }`;
     menuItem.dataset.provider = provider.id;
 
@@ -787,7 +790,7 @@ async function sendPromptToLLM() {
   ) {
     window.close();
     return;
-    }
+  }
 
   // Ask the background service-worker to collect the context and process it
   chrome.runtime.sendMessage({

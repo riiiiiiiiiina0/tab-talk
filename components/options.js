@@ -81,13 +81,15 @@ const createLLMOption = (provider, disabled = false) => {
           ? `<img src="${faviconUrl}" alt="${name} icon" class="w-6 h-6 rounded">`
           : ''
       }
-      <span class="label-text text-gray-600 dark:text-gray-300">${name}${
-        disabled ? ' (disabled)' : ''
-      }</span>
+      <span class="label-text text-gray-600 dark:text-gray-300 ${
+        disabled && 'line-through'
+      }" title="${
+    disabled ? 'Disabled due to browser restrictions' : ''
+  }">${name}</span>
     </div>
     <input type="radio" name="llm-option" class="radio radio-primary" value="${provider}" ${
-      disabled ? 'disabled' : ''
-    } />
+    disabled ? 'disabled' : ''
+  } />
   `;
 
   // Add immediate save listener to the radio input
@@ -374,7 +376,10 @@ async function init() {
     if (firstEnabled && firstEnabled !== llmProvider) {
       await setLLMProvider(firstEnabled);
       llmProvider = firstEnabled;
-      showStatus('The previously selected provider was disabled and has been switched.', true);
+      showStatus(
+        'The previously selected provider was disabled and has been switched.',
+        true,
+      );
     }
   }
   updateLLMOptionValue(llmProvider, true);
