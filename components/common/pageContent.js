@@ -33,9 +33,10 @@ const notionScripts = [
 
 /**
  * Inject the given files into the given tab.
+ * Resolves to true on success, false on failure.
  * @param {number} tabId
  * @param {string[]} files
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>}
  */
 export function injectContentScripts(tabId, files) {
   return new Promise((resolve) => {
@@ -45,7 +46,13 @@ export function injectContentScripts(tabId, files) {
           target: { tabId },
           files,
         },
-        () => resolve(),
+        () => {
+          if (chrome.runtime.lastError) {
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        },
       );
     };
 
@@ -67,7 +74,7 @@ export function injectScriptToGetPageContent(tabId) {
   return new Promise((resolve) => {
     chrome.tabs.get(tabId, (tab) => {
       if (chrome.runtime.lastError || !tab) {
-        injectContentScripts(tabId, generalScripts).then(resolve);
+        injectContentScripts(tabId, generalScripts).then(() => resolve());
         return;
       }
 
@@ -87,7 +94,7 @@ export function injectScriptToGetPageContent(tabId) {
         scripts = generalScripts;
       }
 
-      const doInject = () => injectContentScripts(tabId, scripts).then(resolve);
+      const doInject = () => injectContentScripts(tabId, scripts).then(() => resolve());
 
       if (activateTabFirst) {
         chrome.tabs.update(tabId, { active: true }, () => doInject());
@@ -100,8 +107,9 @@ export function injectScriptToGetPageContent(tabId) {
 
 /**
  * Inject the pasteFilesAsAttachments script into the given tab.
+ * Resolves to true on success, false on failure.
  * @param {number} tabId
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>}
  */
 export function injectScriptToPasteFilesAsAttachments(tabId) {
   return injectContentScripts(tabId, [

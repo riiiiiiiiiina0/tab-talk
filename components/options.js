@@ -4,6 +4,7 @@ import {
   getLLMProvider,
   setLLMProvider,
   LLM_PROVIDER_META,
+  getDisabledLLMProviders,
 } from './utils/llmProviders.js';
 import {
   SUPPORTED_REPLY_LANGUAGE_PRESETS,
@@ -36,9 +37,10 @@ const customLanguageInput = /** @type {HTMLInputElement|null} */ (
 /**
  * Create a label element for an LLM option.
  * @param {string} provider
+ * @param {boolean} disabled
  * @returns {HTMLLabelElement}
  */
-const createLLMOption = (provider) => {
+const createLLMOption = (provider, disabled = false) => {
   const name = LLM_PROVIDER_META[provider].name;
   // Build a favicon URL (64×64) for the provider using its public site. This avoids bundling extra assets.
   const faviconUrl = (() => {
@@ -69,6 +71,9 @@ const createLLMOption = (provider) => {
     'items-center',
     'justify-between',
   );
+  if (disabled) {
+    label.classList.add('opacity-40');
+  }
   label.innerHTML = `
     <div class="flex items-center space-x-2">
       ${
@@ -76,9 +81,13 @@ const createLLMOption = (provider) => {
           ? `<img src="${faviconUrl}" alt="${name} icon" class="w-6 h-6 rounded">`
           : ''
       }
-      <span class="label-text text-gray-600 dark:text-gray-300">${name}</span>
+      <span class="label-text text-gray-600 dark:text-gray-300">${name}${
+        disabled ? ' (disabled)' : ''
+      }</span>
     </div>
-    <input type="radio" name="llm-option" class="radio radio-primary" value="${provider}" />
+    <input type="radio" name="llm-option" class="radio radio-primary" value="${provider}" ${
+      disabled ? 'disabled' : ''
+    } />
   `;
 
   // Add immediate save listener to the radio input
@@ -347,16 +356,27 @@ function setFaviconForStyle(style) {
 }
 
 async function init() {
+  // Load disabled providers
+  const disabled = new Set(await getDisabledLLMProviders());
+
   // Create the LLM options
   if (llmOptions) {
     SUPPORTED_LLM_PROVIDERS.forEach((llmProvider) => {
-      const label = createLLMOption(llmProvider);
+      const label = createLLMOption(llmProvider, disabled.has(llmProvider));
       llmOptions.appendChild(label);
     });
   }
 
   // Set the default LLM provider
-  const llmProvider = await getLLMProvider();
+  let llmProvider = await getLLMProvider();
+  if (disabled.has(llmProvider)) {
+    const firstEnabled = SUPPORTED_LLM_PROVIDERS.find((p) => !disabled.has(p));
+    if (firstEnabled && firstEnabled !== llmProvider) {
+      await setLLMProvider(firstEnabled);
+      llmProvider = firstEnabled;
+      showStatus('The previously selected provider was disabled and has been switched.', true);
+    }
+  }
   updateLLMOptionValue(llmProvider, true);
 
   // Create the Reply Language options

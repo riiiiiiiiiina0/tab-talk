@@ -29,7 +29,9 @@ export const LLM_PROVIDER_META = {
   },
 };
 
-// Get the selected LLM value from Chrome sync storage. Returns a Promise that resolves to 'chatgpt' (default) or 'gemini'.
+// Storage key for disabled providers
+const DISABLED_LLM_PROVIDERS_KEY = 'disabledLLMProviders';
+
 /**
  * @returns {Promise<string>} Resolves to the selected LLM provider.
  */
@@ -46,7 +48,6 @@ export function getLLMProvider() {
   });
 }
 
-// Set the selected LLM value in Chrome sync storage. Accepts only 'chatgpt' or 'gemini'. Returns a Promise.
 /**
  * @param {string} value - The LLM value to set ('chatgpt', 'gemini', 'perplexity', or 'claude').
  * @returns {Promise<void>} Resolves when the value is set.
@@ -56,9 +57,7 @@ export function setLLMProvider(value) {
     if (!SUPPORTED_LLM_PROVIDERS.includes(value)) {
       reject(
         new Error(
-          `Invalid LLM value. Must be one of: ${SUPPORTED_LLM_PROVIDERS.join(
-            ', ',
-          )}.`,
+          `Invalid LLM value. Must be one of: ${SUPPORTED_LLM_PROVIDERS.join(', ')}.`,
         ),
       );
       return;
@@ -75,4 +74,63 @@ export function setLLMProvider(value) {
       }
     });
   });
+}
+
+/**
+ * Get the list of disabled LLM providers.
+ * @returns {Promise<string[]>}
+ */
+export function getDisabledLLMProviders() {
+  return new Promise((resolve) => {
+    try {
+      chrome.storage.local.get([DISABLED_LLM_PROVIDERS_KEY], (result) => {
+        const list = Array.isArray(result[DISABLED_LLM_PROVIDERS_KEY])
+          ? result[DISABLED_LLM_PROVIDERS_KEY]
+          : [];
+        resolve(list);
+      });
+    } catch {
+      resolve([]);
+    }
+  });
+}
+
+/**
+ * Add a provider to the disabled list.
+ * @param {string} provider
+ * @returns {Promise<void>}
+ */
+export async function addDisabledLLMProvider(provider) {
+  const list = await getDisabledLLMProviders();
+  if (!list.includes(provider)) {
+    const updated = [...list, provider];
+    await new Promise((resolve) =>
+      chrome.storage.local.set({ [DISABLED_LLM_PROVIDERS_KEY]: updated }, () => resolve()),
+    );
+  }
+}
+
+/**
+ * Remove a provider from the disabled list.
+ * @param {string} provider
+ * @returns {Promise<void>}
+ */
+export async function removeDisabledLLMProvider(provider) {
+  const list = await getDisabledLLMProviders();
+  if (list.includes(provider)) {
+    const updated = list.filter((p) => p !== provider);
+    await new Promise((resolve) =>
+      chrome.storage.local.set({ [DISABLED_LLM_PROVIDERS_KEY]: updated }, () => resolve()),
+    );
+  }
+}
+
+/**
+ * Check if a provider is disabled.
+ * @param {string} provider
+ * @returns {Promise<boolean>}
+ */
+export async function isLLMProviderDisabled(provider) {
+  const list = await getDisabledLLMProviders();
+  return list.includes(provider);
 }

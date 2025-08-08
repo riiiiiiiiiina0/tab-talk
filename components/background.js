@@ -5,6 +5,9 @@ import {
   LLM_PROVIDER_META,
   LLM_PROVIDER_CHATGPT,
   getLLMProvider,
+  setLLMProvider,
+  getDisabledLLMProviders,
+  addDisabledLLMProvider,
 } from './utils/llmProviders.js';
 import {
   getReplyLanguage,
@@ -143,6 +146,44 @@ async function downloadContentsAsMarkdown(contents) {
 }
 
 /**
+ * Disable a provider, notify the user, and optionally fall back to another provider.
+ * @param {string} providerId
+ */
+async function disableProviderAndNotify(providerId) {
+  try {
+    await addDisabledLLMProvider(providerId);
+
+    // Notification to the user
+    const providerName = LLM_PROVIDER_META[providerId]?.name || providerId;
+    try {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon-128x128.png',
+        title: 'Provider disabled',
+        message: `${providerName} cannot be scripted in this browser. It has been disabled in Bear Talk.`,
+        silent: false,
+      });
+    } catch (e) {
+      console.warn('Notification failed:', e);
+    }
+
+    // If the currently selected provider is the disabled one, switch to a fallback.
+    const current = await getLLMProvider();
+    if (current === providerId) {
+      const disabled = new Set(await getDisabledLLMProviders());
+      const candidates = Object.keys(LLM_PROVIDER_META).filter(
+        (p) => !disabled.has(p),
+      );
+      if (candidates.length > 0) {
+        await setLLMProvider(candidates[0]);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to disable provider', providerId, err);
+  }
+}
+
+/**
  * Handle the runtime message.
  * The collect-page-content message is sent from popup page after user selected tabs from the list.
  * @param {any} message
@@ -248,9 +289,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         if (currentTabMatchesSelectedLLM) {
           // Current tab is the correct LLM page - inject script here as usual
-          chrome.tabs.update(tabId, { active: true }, () => {
-            injectScriptToPasteFilesAsAttachments(tabId);
-            llmTabId = tabId; // record the tab so we know which one to watch
+          chrome.tabs.update(tabId, { active: true }, async () => {
+            const ok = await injectScriptToPasteFilesAsAttachments(tabId);
+            if (!ok) {
+              await clearLoadingBadge();
+              isProcessing = false;
+              await disableProviderAndNotify(selectedLLMProvider);
+            } else {
+              llmTabId = tabId; // record the tab so we know which one to watch
+            }
           });
         } else {
           // Current tab is NOT the correct LLM page - open new LLM tab and inject there
@@ -271,8 +318,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             active: true,
           });
           if (newTab.id) {
-            llmTabId = newTab.id; // record the new LLM tab
-            injectScriptToPasteFilesAsAttachments(newTab.id);
+            const ok = await injectScriptToPasteFilesAsAttachments(newTab.id);
+            if (!ok) {
+              await clearLoadingBadge();
+              isProcessing = false;
+              await disableProviderAndNotify(llmProvider);
+            } else {
+              llmTabId = newTab.id; // record the new LLM tab
+            }
           }
         }
       });

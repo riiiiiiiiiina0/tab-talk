@@ -4,6 +4,7 @@ import {
   LLM_PROVIDER_META,
   getLLMProvider,
   SUPPORTED_LLM_PROVIDERS,
+  getDisabledLLMProviders,
 } from './utils/llmProviders.js';
 
 // Storage key for saved prompts (same as in options_prompts.js)
@@ -407,8 +408,18 @@ async function createAIMenu() {
     return;
   }
 
+  // Load disabled providers
+  const disabledProviders = new Set(await getDisabledLLMProviders());
+
   // Get the default LLM provider
-  const defaultProvider = await getLLMProvider();
+  let defaultProvider = await getLLMProvider();
+  if (disabledProviders.has(defaultProvider)) {
+    // Fall back to first enabled provider
+    const firstEnabled = SUPPORTED_LLM_PROVIDERS.find(
+      (p) => !disabledProviders.has(p),
+    );
+    if (firstEnabled) defaultProvider = firstEnabled;
+  }
   selectedLLMProvider = defaultProvider;
 
   // Update AI button icon to show the default provider
@@ -421,11 +432,23 @@ async function createAIMenu() {
     url: LLM_PROVIDER_META[provider].url,
   }));
 
+  // If any providers are disabled, show a small notice
+  if (Array.from(disabledProviders).length > 0) {
+    const notice = document.createElement('div');
+    notice.className = 'px-3 pt-2 text-xs text-warning';
+    notice.textContent = 'Some providers are disabled due to browser restrictions.';
+    aiList.appendChild(notice);
+  }
+
   allProviders.forEach((provider) => {
     const menuItem = document.createElement('div');
     const isSelected = provider.id === defaultProvider;
-    menuItem.className = `flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
-      isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-base-200'
+    const isDisabled = disabledProviders.has(provider.id);
+    menuItem.className = `flex items-center gap-3 p-3 rounded-lg ${
+      isDisabled
+        ? 'opacity-40 cursor-not-allowed'
+        : 'cursor-pointer transition-colors duration-200 ' +
+          (isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-base-200')
     }`;
     menuItem.dataset.provider = provider.id;
 
@@ -444,27 +467,29 @@ async function createAIMenu() {
     menuItem.appendChild(icon);
     menuItem.appendChild(content);
 
-    // Add click handler
-    menuItem.addEventListener('click', () => {
-      // Remove selection from all items and update hover classes
-      aiList.querySelectorAll('[data-provider]').forEach((item) => {
-        item.classList.remove('bg-primary/10', 'hover:bg-primary/20');
-        item.classList.add('hover:bg-base-200');
+    if (!isDisabled) {
+      // Add click handler
+      menuItem.addEventListener('click', () => {
+        // Remove selection from all items and update hover classes
+        aiList.querySelectorAll('[data-provider]').forEach((item) => {
+          item.classList.remove('bg-primary/10', 'hover:bg-primary/20');
+          item.classList.add('hover:bg-base-200');
+        });
+
+        // Add selection to clicked item and update hover class
+        menuItem.classList.remove('hover:bg-base-200');
+        menuItem.classList.add('bg-primary/10', 'hover:bg-primary/20');
+
+        // Update selected provider
+        selectedLLMProvider = provider.id;
+
+        // Update AI button icon to show the selected provider
+        updateAIButtonIcon(provider.id);
+
+        // Hide popup
+        hidePopups();
       });
-
-      // Add selection to clicked item and update hover class
-      menuItem.classList.remove('hover:bg-base-200');
-      menuItem.classList.add('bg-primary/10', 'hover:bg-primary/20');
-
-      // Update selected provider
-      selectedLLMProvider = provider.id;
-
-      // Update AI button icon to show the selected provider
-      updateAIButtonIcon(provider.id);
-
-      // Hide popup
-      hidePopups();
-    });
+    }
 
     aiList.appendChild(menuItem);
   });
@@ -762,7 +787,7 @@ async function sendPromptToLLM() {
   ) {
     window.close();
     return;
-  }
+    }
 
   // Ask the background service-worker to collect the context and process it
   chrome.runtime.sendMessage({
